@@ -1,0 +1,149 @@
+#METAANALYSIS BEGIN
+identifier	Prophylactic antibiotics and PEECS after ESD
+outcomeType	1
+trialType	1
+effectModel	11
+effectMeasure	1
+zeroEventHandling	Constant
+zeroEventValue	0.5
+ignoreZeroEventsTrials	false
+confidenceInterval	CI_950
+confidenceIntervalAlphaSpendingBoundary	
+group1	ATB
+group2	No ATB
+comment	Written by easyTSA
+#METAANALYSIS END
+
+#TRIAL BEGIN
+sort	dichotomous
+year	2017
+study	Lee SP 2017
+interventionEvent	1.0
+interventionTotal	50.0
+controlEvent	8.0
+controlTotal	50.0
+isHighQuality	true
+isForcefullyIgnored	false
+comment	
+#TRIAL END
+
+#TRIAL BEGIN
+sort	dichotomous
+year	2022
+study	Shichijo S 2022
+interventionEvent	9.0
+interventionTotal	192.0
+controlEvent	14.0
+controlTotal	188.0
+isHighQuality	true
+isForcefullyIgnored	false
+comment	
+#TRIAL END
+
+#TRIAL BEGIN
+sort	dichotomous
+year	2022
+study	Hastier-De Chelle A 2022
+interventionEvent	9.0
+interventionTotal	170.0
+controlEvent	0.0
+controlTotal	56.0
+isHighQuality	true
+isForcefullyIgnored	false
+comment	
+#TRIAL END
+
+#TRIAL BEGIN
+sort	dichotomous
+year	2024
+study	Qiu J 2024
+interventionEvent	10.0
+interventionTotal	100.0
+controlEvent	35.0
+controlTotal	455.0
+isHighQuality	true
+isForcefullyIgnored	false
+comment	
+#TRIAL END
+
+#TRIAL BEGIN
+sort	dichotomous
+year	2024
+study	Liao F 2024
+interventionEvent	10.0
+interventionTotal	110.0
+controlEvent	59.0
+controlTotal	442.0
+isHighQuality	true
+isForcefullyIgnored	false
+comment	
+#TRIAL END
+
+#TRIAL BEGIN
+sort	dichotomous
+year	2025
+study	Zhao YR 2025
+interventionEvent	35.0
+interventionTotal	131.0
+controlEvent	40.0
+controlTotal	131.0
+isHighQuality	true
+isForcefullyIgnored	false
+comment	
+#TRIAL END
+
+#TRIAL BEGIN
+sort	dichotomous
+year	2025
+study	Chen T 2025
+interventionEvent	22.0
+interventionTotal	67.0
+controlEvent	9.0
+controlTotal	14.0
+isHighQuality	true
+isForcefullyIgnored	false
+comment	
+#TRIAL END
+
+#BOUNDARY BEGIN
+sort	conventional
+identifier	5%
+type	103
+type1error	5.0
+#GRAPH BEGIN
+id	5%
+color	155	0	0
+graphLineType	Full
+graphIconType	Diamond Fill
+graphIconSize	6
+doShow	true
+#GRAPH END
+#BOUNDARY END
+
+#BOUNDARY BEGIN
+sort	sequential dichotome
+identifier	RRR 30%, D2 36%, power 80%
+type	103
+type1error	5.0
+oisType	603
+manualOIS	0.0
+type2error	20.0
+interventionEffectType	204
+interventionEffect	8.65
+controlEffect	12.35
+timeAxisScaling	302
+heterogeneityCorrection	404
+heterogeneityCorrectionValue	0.3562
+alphaSpendingFunction	501
+betaSpendingFunction	802
+trials	(2017)Lee SP 2017	(2022)Shichijo S 2022	(2022)Hastier-De Chelle A 2022	(2024)Qiu J 2024	(2024)Liao F 2024	(2025)Zhao YR 2025	(2025)Chen T 2025
+#GRAPH BEGIN
+id	RRR 30%, D2 36%, power 80%
+color	255	0	0
+graphLineType	Full
+graphIconType	Diamond Fill
+graphIconSize	6
+doShow	true
+#GRAPH END
+#BOUNDARY END
+

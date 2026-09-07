@@ -1,0 +1,99 @@
+fit_peecs <- function() {
+  meta::metabin(event.e, n.e, event.c, n.c, data = atb_peecs,
+                studlab = paste(author, year), sm = "RR",
+                method = "MH", method.tau = "REML",
+                random = TRUE, common = FALSE)
+}
+
+test_that("RIS matches the TSA manual formula and sample file", {
+  # Sample file: control 16.36%, RRR 20%, alpha 5%, power 80%, D2 = 0.67
+  r <- tsa_ris(control = 0.1636, rrr = 0.20)
+  z <- qnorm(0.975) + qnorm(0.8)
+  pbar <- (0.1636 + 0.1636 * 0.8) / 2
+  expect_equal(r$ris_fixed, 4 * z^2 * pbar * (1 - pbar) / (0.1636 * 0.2)^2)
+  r2 <- tsa_ris(control = 0.1636, rrr = 0.20, diversity = 0.67)
+  expect_equal(r2$ris, ceiling(r$ris_fixed / 0.33))
+})
+
+test_that("O'Brien-Fleming boundaries reproduce known values", {
+  # Equally spaced looks, alpha 0.05 two-sided (Lan-DeMets OBF-type):
+  # reference from ldbounds/gsDesign: 4.333, 2.963, 2.359, 2.014
+  b <- tsa_bounds(c(0.25, 0.5, 0.75, 1))
+  expect_equal(b, c(4.333, 2.963, 2.359, 2.014), tolerance = 0.01)
+  # single look at full information is the conventional value
+  expect_equal(tsa_bounds(1), qnorm(0.975), tolerance = 0.005)
+  # spending alpha/2 per side: single look, one-sided alpha 0.025
+  expect_equal(tsa_bounds(1, sides = 1, alpha = 0.025), qnorm(0.975), tolerance = 0.005)
+  # very early looks are truncated at 8
+  expect_equal(tsa_bounds(c(0.01, 1))[1], 8)
+})
+
+test_that("futility boundary is below the upper boundary and emerges late", {
+  t <- c(0.2, 0.4, 0.6, 0.8, 1)
+  up <- tsa_bounds(t)
+  fu <- tsa_futility(t, up)
+  ok <- !is.na(fu)
+  expect_true(all(fu[ok] <= up[ok] + 1e-6))
+  expect_true(is.na(fu[1]))
+  expect_true(fu[5] <= up[5])
+  expect_true(fu[5] > 1)
+})
+
+test_that("tsa_create runs on the PEECS example", {
+  m <- fit_peecs()
+  x <- tsa_create(m, rrr = 0.30, label.e = "ATB", label.c = "No ATB")
+  expect_s3_class(x, "easytsa")
+  expect_equal(nrow(x$looks), 7)
+  expect_equal(x$looks$year, sort(atb_peecs$year))
+  expect_equal(x$looks$n_cum[7], sum(atb_peecs$n.e + atb_peecs$n.c))
+  # negative outcome: Z sign flipped so that RR < 1 gives positive Z
+  expect_true(x$looks$z_plot[7] > 0)
+  expect_equal(x$looks$z[7], m$TE.random / m$seTE.random)
+  expect_true(all(x$looks$upper >= qnorm(0.975) - 1e-6))
+  expect_output(print(x), "RIS")
+  expect_output(summary(x), "TSA-adjusted")
+})
+
+test_that("empirical effect and common model fall back sensibly", {
+  m <- meta::metabin(event.e, n.e, event.c, n.c, data = atb_peecs,
+                     studlab = paste(author, year), sm = "RR",
+                     random = FALSE, common = TRUE)
+  expect_message(x <- tsa_create(m), "common")
+  expect_equal(x$settings$model, "common")
+  expect_equal(x$settings$effect_type, "empirical")
+  expect_equal(x$ris$rrr, 1 - exp(m$TE.common))
+})
+
+test_that("plot builds", {
+  x <- tsa_create(fit_peecs(), rrr = 0.30)
+  p <- tsa_plot(x, show_labels = TRUE)
+  expect_s3_class(p, "ggplot")
+  expect_silent(ggplot2::ggplot_build(p))
+  p2 <- tsa_plot(x, show_futility = FALSE, subtitle = NULL, ris_label = NULL)
+  expect_s3_class(p2, "ggplot")
+})
+
+test_that(".TSA round trip and sample file parsing", {
+  x <- tsa_create(fit_peecs(), rrr = 0.30, title = "PEECS")
+  f <- tsa_write(x, tempfile(fileext = ".TSA"))
+  txt <- readLines(f)
+  expect_true(any(grepl("^#METAANALYSIS BEGIN", txt)))
+  expect_equal(sum(grepl("^#TRIAL BEGIN", txt)), 7)
+  expect_true(any(grepl("^interventionEffectType\t204", txt)))
+  expect_true(any(grepl("^heterogeneityCorrection\t404", txt)))
+  expect_true(any(grepl("^betaSpendingFunction\t802", txt)))
+  d <- tsa_read(f)
+  expect_equal(d$event.e, atb_peecs$event.e[order(atb_peecs$year)])
+  expect_equal(attr(d, "settings")$identifier, "PEECS")
+
+  s <- tsa_read(system.file("extdata", "atb_peecs.TSA", package = "easyTSA"))
+  expect_equal(nrow(s), 7)
+  expect_equal(s$studlab[1], "Lee SP 2017")
+})
+
+test_that("tsa_launch errors cleanly without java or the program", {
+  x <- tsa_create(fit_peecs(), rrr = 0.30)
+  expect_error(tsa_launch(x, java = "no-such-java-binary"), "Java not found")
+  withr::with_envvar(c(TSA_HOME = ""), withr::with_options(
+    list(easyTSA.jar = NULL), expect_equal(tsa_jar(), "")))
+})
