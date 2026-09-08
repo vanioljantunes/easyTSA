@@ -15,6 +15,19 @@ test_that("RIS matches the TSA manual formula and sample file", {
   expect_equal(r2$ris, ceiling(r$ris_fixed / 0.33))
 })
 
+test_that("RIS reproduces the worked examples of the TSA manual (section 5)", {
+  f <- function(...) tsa_ris(...)$ris
+  # 5.2 smoking cessation: control 14%, 20% relative benefit increase
+  expect_equal(f(control = 0.14, rrr = -0.20), 5218)
+  # 5.3 atrial fibrillation: control 27.6%, RRR 20%, alpha 1%, beta 10%, D2 49%
+  expect_equal(f(control = 0.276, rrr = 0.20, alpha = 0.01, beta = 0.10,
+                 diversity = 0.49), 7150, tolerance = 0.001)
+  # 5.5 tuberculosis: control 5%, RRR 25%, D2 20%
+  expect_equal(f(control = 0.05, rrr = 0.25, diversity = 0.20), 10508)
+  # 5.4 myocardial infarction: control 3.9%, RRR 33% (inputs rounded in text)
+  expect_equal(f(control = 0.039, rrr = 0.33), 5942, tolerance = 0.01)
+})
+
 test_that("O'Brien-Fleming boundaries reproduce known values", {
   # Equally spaced looks, alpha 0.05 two-sided (Lan-DeMets OBF-type):
   # reference from ldbounds/gsDesign: 4.333, 2.963, 2.359, 2.014

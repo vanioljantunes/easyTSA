@@ -1,0 +1,106 @@
+---
+title: "easyTSA: Trial Sequential Analysis from a meta object"
+output: html_document
+---
+
+```{r packages}
+if (!requireNamespace("pacman", quietly = TRUE)) {
+  install.packages("pacman")
+}
+if (!requireNamespace("remotes", quietly = TRUE)) {
+  install.packages("remotes")
+}
+if (!requireNamespace("easyTSA", quietly = TRUE)) {
+  remotes::install_github("vanioljantunes/easyTSA")
+}
+pacman::p_load(easyTSA, meta, readxl, rstudioapi, ggplot2)
+```
+
+```{r import data}
+# choose file (binary sheet: author, year, event.e, n.e, event.c, n.c)
+# press Cancel to use the bundled example (atb_peecs)
+myfile <- tryCatch(selectFile(caption = "choose data"), error = function(e) NULL)
+
+if (is.null(myfile)) {
+  data <- atb_peecs
+  mwd <- getwd()
+} else {
+  # takes directory of the file
+  mwd <- dirname(myfile)
+
+  # take sheet names from excel file selected
+  sheet_names <- excel_sheets(myfile)
+
+  # create a list called ma where the data sets will be saved and named according sheet names
+  ma <- lapply(sheet_names, function(x) {as.data.frame(read_excel(myfile, sheet = x))})
+
+  # name the objects inside the list with the sheet names
+  names(ma) <- sheet_names
+
+  data <- ma$A_peecs
+  if ("include" %in% names(data)) data <- data[as.logical(data$include), ]
+  data <- data[!is.na(data$event.e) & !is.na(data$event.c), ]
+}
+
+data$studlab <- paste(data$author, data$year)
+```
+
+```{r meta-analysis}
+outcome.name <- "Post-ESD electrocoagulation syndrome"
+intervention.name <- "ATB"
+control.name <- "No ATB"
+
+m <- metabin(event.e, n.e, event.c, n.c, studlab = studlab, data = data,
+             sm = "RR", method = "MH", method.tau = "REML",
+             random = TRUE, common = FALSE)
+m
+```
+
+```{r tsa}
+# defaults: 5% two-sided conventional boundary, O'Brien-Fleming alpha-spending
+# boundary on the sample-size axis, 80% power, anticipated effect from the
+# weight-averaged arm proportions of the meta output, RIS corrected by D2
+x <- tsa_create(m,
+                label.e = intervention.name, label.c = control.name,
+                title = outcome.name,
+                outcome = "negative")   # event is a harm: RR < 1 favours ATB
+x
+summary(x)
+
+# same, with a clinically anticipated effect instead of the empirical one
+x30 <- tsa_create(m, rrr = 0.30, control = 0.12,
+                  label.e = intervention.name, label.c = control.name,
+                  title = outcome.name)
+x30
+```
+
+```{r plots}
+# tsa plot, empirical effect
+png(paste0(mwd, "/tsa_empirical.png"), width = 2400, height = 1500, res = 250)
+print(tsa_plot(x, show_labels = TRUE))
+dev.off()
+
+# tsa plot, RRR 30%
+png(paste0(mwd, "/tsa_rrr30.png"), width = 2400, height = 1500, res = 250)
+print(tsa_plot(x30, show_labels = TRUE))
+dev.off()
+
+# adjust appearance: ggplot object, add layers as usual
+p <- tsa_plot(x,
+              subtitle = NULL,
+              show_favours = FALSE,
+              col_z = "black", col_bound = "firebrick",
+              ylim = c(-6, 6)) +
+  theme_classic(base_size = 13)
+print(p)
+```
+
+```{r tsa file}
+# file for the Copenhagen Trial Unit TSA program (File > Open in the program)
+tsa_write(x, paste0(mwd, "/tsa_empirical.TSA"))
+tsa_write(x30, paste0(mwd, "/tsa_rrr30.TSA"))
+
+# to launch the program from R, install TSA from https://ctu.dk/tsa/ and:
+# Sys.setenv(TSA_HOME = "C:/path/to/TSA 0.9.5.10 Beta")
+# tsa_launch(x)
+```
