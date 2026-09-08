@@ -122,15 +122,15 @@ doShow	true
 
 #BOUNDARY BEGIN
 sort	sequential dichotome
-identifier	RRR 30%, D2 36%, power 80%
+identifier	RRR 32%, D2 36%, power 80%
 type	103
 type1error	5.0
 oisType	603
 manualOIS	0.0
 type2error	20.0
 interventionEffectType	204
-interventionEffect	8.65
-controlEffect	12.35
+interventionEffect	19.16
+controlEffect	28.17
 timeAxisScaling	302
 heterogeneityCorrection	404
 heterogeneityCorrectionValue	0.3562
@@ -138,7 +138,7 @@ alphaSpendingFunction	501
 betaSpendingFunction	802
 trials	(2017)Lee SP 2017	(2022)Shichijo S 2022	(2022)Hastier-De Chelle A 2022	(2024)Qiu J 2024	(2024)Liao F 2024	(2025)Zhao YR 2025	(2025)Chen T 2025
 #GRAPH BEGIN
-id	RRR 30%, D2 36%, power 80%
+id	RRR 32%, D2 36%, power 80%
 color	255	0	0
 graphLineType	Full
 graphIconType	Diamond Fill

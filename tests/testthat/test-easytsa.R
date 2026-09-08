@@ -61,7 +61,14 @@ test_that("empirical effect and common model fall back sensibly", {
   expect_message(x <- tsa_create(m), "common")
   expect_equal(x$settings$model, "common")
   expect_equal(x$settings$effect_type, "empirical")
-  expect_equal(x$ris$rrr, 1 - exp(m$TE.common))
+  w <- m$w.common / sum(m$w.common)
+  pc <- sum(w * atb_peecs$event.c / atb_peecs$n.c)
+  pe <- sum(w * atb_peecs$event.e / atb_peecs$n.e)
+  expect_equal(x$ris$control, pc)
+  expect_equal(x$ris$rrr, 1 - pe / pc)
+  x2 <- tsa_create(m, control = 0.10, intervention = 0.07)
+  expect_equal(x2$ris$rrr, 0.3)
+  expect_equal(x2$settings$effect_type, "user")
 })
 
 test_that("plot builds", {

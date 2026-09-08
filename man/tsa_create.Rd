@@ -8,6 +8,7 @@ tsa_create(
   m,
   rrr = NULL,
   control = NULL,
+  intervention = NULL,
   md = NULL,
   variance = NULL,
   alpha = 0.05,
@@ -28,12 +29,17 @@ tsa_create(
 \item{m}{A \code{meta} object (\code{metabin} or \code{metacont}).}
 
 \item{rrr}{Anticipated relative risk reduction (binary data), e.g. \code{0.20}.
-Default \code{NULL} uses the pooled estimate of \code{m} (the "empirical" option
-of the TSA software), which is generally optimistic; give a clinically
-minimal effect when you have one.}
+Default \code{NULL} is the "empirical" option of the TSA software: the
+event proportion of each arm is averaged over trials with the weights
+of the meta-analysis model, and the RRR is \code{1 - p_e / p_c}. This is
+generally optimistic; give a clinically minimal effect when you have
+one.}
 
 \item{control}{Anticipated control event proportion (binary data).
-Default \code{NULL} uses the pooled proportion in the control arms of \code{m}.}
+Default \code{NULL} uses the weight-averaged control-arm proportion of \code{m}.}
+
+\item{intervention}{Anticipated intervention event proportion (binary
+data); alternative to \code{rrr}. Default \code{NULL}.}
 
 \item{md, variance}{Anticipated mean difference and variance (continuous
 data). Defaults use the pooled estimate and the pooled within-trial
@@ -86,8 +92,11 @@ m <- meta::metabin(event.e, n.e, event.c, n.c, data = atb_peecs,
                    studlab = paste(author, year), sm = "RR",
                    method = "MH", method.tau = "REML",
                    random = TRUE, common = FALSE)
-x <- tsa_create(m, rrr = 0.30, label.e = "ATB", label.c = "No ATB",
+# empirical effect: weighted arm proportions from the meta output
+x <- tsa_create(m, label.e = "ATB", label.c = "No ATB",
                 title = "PEECS after ESD")
 x
 summary(x)
+# clinically anticipated effect instead
+tsa_create(m, rrr = 0.30)
 }

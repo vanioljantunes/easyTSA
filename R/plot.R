@@ -115,9 +115,12 @@ tsa_plot <- function(x, title = x$settings$title, subtitle = "auto",
     ggplot2::geom_point(data = zc[-1, ], ggplot2::aes(x = .data$n, y = .data$z),
                         colour = col_z, shape = 15, size = point_size)
   if (isTRUE(show_labels)) {
+    lab <- zc[-1, ]
+    lab$hjust <- ifelse(lab$n > 0.8 * xmax, 1.1, -0.15)
     p <- p + ggplot2::geom_text(
-      data = zc[-1, ], ggplot2::aes(x = .data$n, y = .data$z, label = .data$study),
-      size = 3, hjust = -0.15, vjust = -0.6, colour = col_z)
+      data = lab, ggplot2::aes(x = .data$n, y = .data$z, label = .data$study,
+                               hjust = .data$hjust),
+      size = 3, vjust = -0.6, colour = col_z)
   }
   if (!is.null(ris_label)) {
     if (identical(ris_label, "auto")) ris_label <- sprintf("RIS = %d", ris)

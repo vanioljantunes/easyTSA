@@ -20,11 +20,15 @@
 #'
 #' @param m A `meta` object (`metabin` or `metacont`).
 #' @param rrr Anticipated relative risk reduction (binary data), e.g. `0.20`.
-#'   Default `NULL` uses the pooled estimate of `m` (the "empirical" option
-#'   of the TSA software), which is generally optimistic; give a clinically
-#'   minimal effect when you have one.
+#'   Default `NULL` is the "empirical" option of the TSA software: the
+#'   event proportion of each arm is averaged over trials with the weights
+#'   of the meta-analysis model, and the RRR is `1 - p_e / p_c`. This is
+#'   generally optimistic; give a clinically minimal effect when you have
+#'   one.
 #' @param control Anticipated control event proportion (binary data).
-#'   Default `NULL` uses the pooled proportion in the control arms of `m`.
+#'   Default `NULL` uses the weight-averaged control-arm proportion of `m`.
+#' @param intervention Anticipated intervention event proportion (binary
+#'   data); alternative to `rrr`. Default `NULL`.
 #' @param md,variance Anticipated mean difference and variance (continuous
 #'   data). Defaults use the pooled estimate and the pooled within-trial
 #'   variance.
@@ -57,12 +61,16 @@
 #'                    studlab = paste(author, year), sm = "RR",
 #'                    method = "MH", method.tau = "REML",
 #'                    random = TRUE, common = FALSE)
-#' x <- tsa_create(m, rrr = 0.30, label.e = "ATB", label.c = "No ATB",
+#' # empirical effect: weighted arm proportions from the meta output
+#' x <- tsa_create(m, label.e = "ATB", label.c = "No ATB",
 #'                 title = "PEECS after ESD")
 #' x
 #' summary(x)
+#' # clinically anticipated effect instead
+#' tsa_create(m, rrr = 0.30)
 #' @export
-tsa_create <- function(m, rrr = NULL, control = NULL, md = NULL,
+tsa_create <- function(m, rrr = NULL, control = NULL, intervention = NULL,
+                       md = NULL,
                        variance = NULL, alpha = 0.05, beta = 0.20,
                        diversity = "D2", futility = TRUE,
                        model = c("random", "common"),
@@ -120,20 +128,29 @@ tsa_create <- function(m, rrr = NULL, control = NULL, md = NULL,
   }
   te_pooled <- if (model == "random") m$TE.random else m$TE.common
   if (is_bin) {
-    if (is.null(control)) control <- sum(m$event.c) / sum(m$n.c)
-    if (is.null(rrr)) {
-      rr_hat <- switch(m$sm,
-        RR = exp(te_pooled),
-        OR = { o <- exp(te_pooled); pc <- control
-               (o * pc / (1 - pc + o * pc)) / pc },
-        RD = (control + te_pooled) / control)
-      rrr <- 1 - rr_hat
+    # Weighted arm proportions from the meta output (TSA "empirical"
+    # effect): each arm's event proportion averaged with the trial weights
+    # of the chosen model.
+    w <- if (model == "random") m$w.random else m$w.common
+    w <- w / sum(w)
+    p_c_w <- sum(w * m$event.c / m$n.c)
+    p_e_w <- sum(w * m$event.e / m$n.e)
+    if (is.null(control)) control <- p_c_w
+    if (is.null(rrr) && is.null(intervention)) {
+      intervention <- p_e_w
+      rrr <- 1 - intervention / control
       effect_type <- "empirical"
+    } else if (!is.null(intervention)) {
+      rrr <- 1 - intervention / control
+      effect_type <- "user"
     } else {
       effect_type <- "user"
     }
     ris <- tsa_ris(control = control, rrr = rrr, alpha = alpha,
                    beta = beta, diversity = div_value)
+    ris$arm_weights <- data.frame(studlab = m$studlab, weight = w,
+                                  p.e = m$event.e / m$n.e,
+                                  p.c = m$event.c / m$n.c)
   } else {
     if (is.null(md)) { md <- te_pooled; effect_type <- "empirical" }
     else effect_type <- "user"
@@ -260,9 +277,9 @@ print.easytsa <- function(x, digits = 3, ...) {
   cat(sprintf("  %s vs %s, %s, %s model, %d trials, %d participants\n",
               s$label.e, s$label.c, s$sm, s$model, nrow(L), last$n_cum))
   if (s$type == "binary") {
-    cat(sprintf("  Anticipated effect: control %.1f%%, RRR %.1f%% (%s), intervention %.1f%%\n",
-                100 * r$control, 100 * r$rrr, s$effect_type,
-                100 * r$intervention))
+    cat(sprintf("  Anticipated effect (%s): control %.2f%%, intervention %.2f%%, RRR %.1f%%\n",
+                if (s$effect_type == "empirical") "empirical, weighted arms" else "user",
+                100 * r$control, 100 * r$intervention, 100 * r$rrr))
   } else {
     cat(sprintf("  Anticipated effect: MD %.3g (%s), variance %.3g\n",
                 r$md, s$effect_type, r$variance))

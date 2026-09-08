@@ -62,21 +62,26 @@ m <- metabin(event.e, n.e, event.c, n.c, data = atb_peecs,
              method = "MH", method.tau = "REML",
              random = TRUE, common = FALSE)
 
-x <- tsa_create(m, rrr = 0.30, label.e = "ATB", label.c = "No ATB",
+x <- tsa_create(m, label.e = "ATB", label.c = "No ATB",
                 title = "Prophylactic antibiotics and PEECS after ESD")
 x
 ```
 
+Defaults: 5% two-sided conventional boundary, alpha-spending boundary
+on the sample-size axis with 80% power, anticipated effect taken from
+the meta output (each arm's event proportion averaged with the model
+weights), and the RIS inflated by the diversity D-squared of the model.
+
 ```
 Trial Sequential Analysis: Prophylactic antibiotics and PEECS after ESD
   ATB vs No ATB, RR, random model, 7 trials, 2156 participants
-  Anticipated effect: control 12.4%, RRR 30.0% (user), intervention 8.6%
+  Anticipated effect (empirical, weighted arms): control 28.17%, intervention 19.16%, RRR 32.0%
   alpha 0.05 (two-sided), power 80%, OBF spending
   Diversity adjustment: D2 = 35.6% (factor 1.55)
-  RIS = 3338 (fixed-effect RIS = 2149); information fraction 64.6%
-  Cumulative Z = 1.84; boundary at last look = 2.66
-  Conclusion: Inconclusive: neither the monitoring nor the futility
-  boundaries were crossed, and the RIS was not reached.
+  RIS = 1085 (fixed-effect RIS = 698); information fraction 198.7%
+  Cumulative Z = 1.84; boundary at last look = 1.96
+  Conclusion: Futility boundary crossed at look 3 (Hastier-De Chelle A 2022):
+  the anticipated effect can be rejected.
 ```
 
 ```r
@@ -85,18 +90,18 @@ summary(x)
 
 ```
  Look                    Study Year    N    IF     Z Boundary Futility
-    1              Lee SP 2017 2017  100 0.030 1.996    8.000
-    2          Shichijo S 2022 2022  480 0.144 1.306    5.802
-    3 Hastier-De Chelle A 2022 2022  706 0.212 0.500    4.740
-    4               Qiu J 2024 2024 1261 0.378 0.432    3.449
-    5              Liao F 2024 2024 1813 0.543 0.883    2.849    0.586
-    6             Zhao YR 2025 2025 2075 0.622 1.199    2.664    0.788
-    7              Chen T 2025 2025 2156 0.646 1.841    2.663    0.806
+    1              Lee SP 2017 2017  100 0.092 1.996    8.000
+    2          Shichijo S 2022 2022  480 0.442 1.306    3.187    0.244
+    3 Hastier-De Chelle A 2022 2022  706 0.651 0.500    2.554    0.971
+    4               Qiu J 2024 2024 1261 1.162 0.432    1.960
+    5              Liao F 2024 2024 1813 1.671 0.883    1.960
+    6             Zhao YR 2025 2025 2075 1.912 1.199    1.960
+    7              Chen T 2025 2025 2156 1.987 1.841    1.960
 
 Final estimate (RR):
          type estimate lower upper z_boundary
- conventional    0.748 0.550 1.019      1.960
- TSA-adjusted    0.748 0.492 1.138      2.663
+ conventional    0.748  0.55 1.019       1.96
+ TSA-adjusted    0.748  0.55 1.019       1.96
 ```
 
 ```r
@@ -107,9 +112,16 @@ tsa_plot(x, show_labels = TRUE)
 
 Reading: the blue squares are the cumulative Z after each study, the red
 diamonds the monitoring boundaries, the dashed wedge the futility
-boundaries, the vertical line the RIS. With 65% of the required
-information the Z-curve sits between the boundaries: the evidence is
-inconclusive for a 30% relative risk reduction.
+boundaries, the vertical line the RIS. The Z-curve entered the inner
+wedge at the third study and the RIS has been passed twice over, so an
+effect of the empirical size (RRR 32%) can be rejected; the final
+estimate stays below conventional significance.
+
+A clinically chosen effect instead of the empirical one:
+
+```r
+tsa_create(m, rrr = 0.30, control = 0.12)   # RIS 3338, IF 65%, inconclusive
+```
 
 ---
 
@@ -117,8 +129,9 @@ inconclusive for a 30% relative risk reduction.
 
 | Argument | Meaning | Default |
 |---|---|---|
-| `rrr` (or `md`) | anticipated relative risk reduction (mean difference) | pooled estimate of `m` ("empirical") |
-| `control` | anticipated control-group risk | pooled control risk of `m` |
+| `rrr` (or `md`) | anticipated relative risk reduction (mean difference) | "empirical": `1 - p_e / p_c` from the weighted arm proportions of `m` |
+| `control` | anticipated control-group risk | weight-averaged control-arm proportion of `m` |
+| `intervention` | anticipated intervention-group risk (alternative to `rrr`) | weight-averaged intervention-arm proportion of `m` |
 | `diversity` | heterogeneity adjustment of the RIS | `"D2"` from `m`; also `"I2"`, `"none"`, or a number |
 
 Other settings: `alpha` (0.05), `beta` (0.20), `futility` (TRUE),
