@@ -120,7 +120,7 @@ estimate stays below conventional significance.
 A clinically chosen effect instead of the empirical one:
 
 ```r
-tsa_create(m, rrr = 0.30, control = 0.12)   # RIS 3338, IF 65%, inconclusive
+tsa_create(m, rrr = 0.30, control = 0.12)   # RIS 3447, IF 63%, inconclusive
 ```
 
 ---
