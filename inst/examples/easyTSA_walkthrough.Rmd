@@ -13,15 +13,18 @@ if (!requireNamespace("remotes", quietly = TRUE)) {
 if (!requireNamespace("easyTSA", quietly = TRUE)) {
   remotes::install_github("vanioljantunes/easyTSA")
 }
-pacman::p_load(easyTSA, meta, readxl, rstudioapi, ggplot2)
+pacman::p_load(meta, readxl, rstudioapi, ggplot2)
+library(easyTSA)
 ```
 
 ```{r import data}
 # choose file (binary sheet: author, year, event.e, n.e, event.c, n.c)
 # press Cancel to use the bundled example (atb_peecs)
-myfile <- tryCatch(selectFile(caption = "choose data"), error = function(e) NULL)
+myfile <- if (interactive()) tryCatch(selectFile(caption = "choose data"),
+                                      error = function(e) NULL) else NULL
 
-if (is.null(myfile)) {
+if (is.null(myfile) || !nzchar(myfile)) {
+  data(atb_peecs, package = "easyTSA")
   data <- atb_peecs
   mwd <- getwd()
 } else {
