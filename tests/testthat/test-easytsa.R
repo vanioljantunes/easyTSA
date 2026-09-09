@@ -58,6 +58,12 @@ test_that("tsa_create runs on the PEECS example", {
   expect_s3_class(x, "easytsa")
   expect_equal(nrow(x$looks), 7)
   expect_equal(x$looks$year, sort(atb_peecs$year))
+  expect_equal(x$looks$studlab[2], "Hastier-De Chelle A 2022")
+  sub <- atb_peecs[atb_peecs$year <= 2017 | atb_peecs$author == "Hastier-De Chelle A", ]
+  m2 <- meta::metabin(event.e, n.e, event.c, n.c, data = sub,
+                      studlab = paste(author, year), sm = "RR", method = "MH",
+                      method.tau = "REML", random = TRUE, common = FALSE)
+  expect_equal(x$looks$z[2], m2$TE.random / m2$seTE.random)
   expect_equal(x$looks$n_cum[7], sum(atb_peecs$n.e + atb_peecs$n.c))
   # negative outcome: Z sign flipped so that RR < 1 gives positive Z
   expect_true(x$looks$z_plot[7] > 0)
@@ -103,7 +109,8 @@ test_that(".TSA round trip and sample file parsing", {
   expect_true(any(grepl("^heterogeneityCorrection\t404", txt)))
   expect_true(any(grepl("^betaSpendingFunction\t802", txt)))
   d <- tsa_read(f)
-  expect_equal(d$event.e, atb_peecs$event.e[order(atb_peecs$year)])
+  o <- order(atb_peecs$year, paste(atb_peecs$author, atb_peecs$year))
+  expect_equal(d$event.e, atb_peecs$event.e[o])
   expect_equal(attr(d, "settings")$identifier, "PEECS")
 
   s <- tsa_read(system.file("extdata", "atb_peecs.TSA", package = "easyTSA"))
