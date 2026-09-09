@@ -7,7 +7,7 @@
 tsa_write(
   x,
   file,
-  diversity_mode = c("user", "variance"),
+  diversity_mode = c("variance", "user"),
   boundary_name = NULL
 )
 }
@@ -16,10 +16,11 @@ tsa_write(
 
 \item{file}{Output path (extension \code{.TSA} is added when missing).}
 
-\item{diversity_mode}{\code{"user"} (default) writes the diversity value used
-in R as a user-defined heterogeneity correction, so the RIS in the TSA
-software matches. \code{"variance"} lets the software compute its own D2
-from its own model.}
+\item{diversity_mode}{\code{"variance"} (default) lets the TSA program
+estimate the heterogeneity correction (D2) from its own model ("Model
+Variance Based"). \code{"user"} writes the diversity value used in R as a
+user-defined correction instead, so the RIS in the program matches R
+exactly.}
 
 \item{boundary_name}{Name of the alpha-spending boundary in the file.}
 }

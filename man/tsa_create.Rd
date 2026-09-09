@@ -63,7 +63,8 @@ sign convention: positive Z always means "favours intervention".}
 
 \item{sortvar}{Variable giving the trial order (usually publication
 year). Default: \code{year} column of the data used in \code{m}, else the order
-of \code{m}.}
+of \code{m}. Ties are broken alphabetically by study label (TSA program
+convention).}
 
 \item{spending}{Spending function for both boundaries, see
 \code{\link[=tsa_spending]{tsa_spending()}}.}

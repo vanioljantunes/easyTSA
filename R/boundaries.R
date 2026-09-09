@@ -100,7 +100,7 @@ tsa_bounds <- function(t, alpha = 0.05, sides = 2, spending = "obf",
       dens <- .ld_step(x, dens, t[k] - t[k - 1], 0)
     }
     tail_prob <- function(z) .ld_int(x, dens, x >= z * sqrt(t[k]))
-    if (incr[k] <= 1e-10 || tail_prob(trunc) >= incr[k]) {
+    if (incr[k] <= 0 || tail_prob(trunc) >= incr[k]) {
       b[k] <- trunc
     } else {
       b[k] <- stats::uniroot(function(z) tail_prob(z) - incr[k],

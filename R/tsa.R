@@ -44,7 +44,8 @@
 #'   sign convention: positive Z always means "favours intervention".
 #' @param sortvar Variable giving the trial order (usually publication
 #'   year). Default: `year` column of the data used in `m`, else the order
-#'   of `m`.
+#'   of `m`. Ties are broken alphabetically by study label (TSA program
+#'   convention).
 #' @param spending Spending function for both boundaries, see
 #'   [tsa_spending()].
 #' @param label.e,label.c Arm labels used in plots and files. Defaults
@@ -104,13 +105,16 @@ tsa_create <- function(m, rrr = NULL, control = NULL, intervention = NULL,
     }
   }
   if (length(sortvar) != k) stop("`sortvar` must have one value per study.")
-  ord <- order(sortvar, seq_len(k))
+  # Ties within a year are broken alphabetically by study label, as the
+  # TSA program does.
+  ord <- order(sortvar, m$studlab)
   studlab <- m$studlab[ord]
   n_trial <- (m$n.e + m$n.c)[ord]
   year <- sortvar[ord]
 
   # ---- cumulative meta-analysis ------------------------------------------
-  mc <- meta::metacum(m, pooled = model, sortvar = sortvar)
+  rank_pos <- integer(k); rank_pos[ord] <- seq_len(k)
+  mc <- meta::metacum(m, pooled = model, sortvar = rank_pos)
   TE <- mc$TE[seq_len(k)]
   seTE <- mc$seTE[seq_len(k)]
   z <- TE / seTE

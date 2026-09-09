@@ -32,10 +32,11 @@
 #'
 #' @param x An `easytsa` object.
 #' @param file Output path (extension `.TSA` is added when missing).
-#' @param diversity_mode `"user"` (default) writes the diversity value used
-#'   in R as a user-defined heterogeneity correction, so the RIS in the TSA
-#'   software matches. `"variance"` lets the software compute its own D2
-#'   from its own model.
+#' @param diversity_mode `"variance"` (default) lets the TSA program
+#'   estimate the heterogeneity correction (D2) from its own model ("Model
+#'   Variance Based"). `"user"` writes the diversity value used in R as a
+#'   user-defined correction instead, so the RIS in the program matches R
+#'   exactly.
 #' @param boundary_name Name of the alpha-spending boundary in the file.
 #'
 #' @return The path, invisibly.
@@ -46,7 +47,7 @@
 #' f <- tsa_write(x, tempfile(fileext = ".TSA"))
 #' readLines(f)[1:15]
 #' @export
-tsa_write <- function(x, file, diversity_mode = c("user", "variance"),
+tsa_write <- function(x, file, diversity_mode = c("variance", "user"),
                       boundary_name = NULL) {
   if (!inherits(x, "easytsa")) stop("`x` must be an easytsa object.")
   diversity_mode <- match.arg(diversity_mode)
