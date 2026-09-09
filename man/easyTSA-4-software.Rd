@@ -6,42 +6,29 @@
 \description{
 The Copenhagen Trial Unit's TSA program (Java, version 0.9.5.10 Beta) is
 free to use but may not be redistributed, so it is not bundled. Download
-it from \url{https://ctu.dk/tsa/} (the zip contains \code{TSA.jar}, the user
-manual and the license), unzip it, and point easyTSA to it:
+it from \url{https://ctu.dk/tsa/} (the zip contains \code{TSA.jar}, \verb{lib/}, the
+user manual and the license), unzip it, and point easyTSA to it:
 
-\if{html}{\out{<div class="sourceCode r">}}\preformatted{Sys.setenv(TSA_HOME = "C:/Users/me/TSA 0.9.5.10 Beta")  # folder with TSA.jar
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{Sys.setenv(TSA_HOME = "C:/Users/me/TSA 0.9.5.10 Beta")
 # or
 options(easyTSA.jar = "C:/Users/me/TSA 0.9.5.10 Beta/TSA.jar")
+tsa_engine()   # starts the program's engine inside R; errors explain what is missing
 }\if{html}{\out{</div>}}
 }
+\section{How it runs}{
+
+\code{\link[=tsa_run]{tsa_run()}} writes the \code{.TSA} file, and the program (loaded through
+\code{rJava}, headless, no window) reads that file with its own reader and
+computes the required information size, boundaries, inner wedge and
+Z-curve with its own classes. The same file opens unchanged in the
+program's interface (\code{File > Open}).
+}
+
 \section{Round trip}{
 
 
-\if{html}{\out{<div class="sourceCode r">}}\preformatted{tsa_write(x, "peecs.TSA")        # R -> program
-d <- tsa_read("peecs.TSA")       # program -> R (trials data frame)
-m2 <- meta::metabin(event.e, n.e, event.c, n.c, data = d,
-                    studlab = studlab, sm = "RR")
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{tsa_write(tsa_request(m, control = 0.12, rrr = 0.30), "peecs.TSA")  # no program needed
+d <- tsa_read("peecs.TSA")       # trials back into R
 }\if{html}{\out{</div>}}
-
-The file written by \code{\link[=tsa_write]{tsa_write()}} contains the trials, a conventional
-boundary and an alpha-spending boundary with the same anticipated
-effect (as a user-defined RRR), power and diversity (as a user-defined
-heterogeneity correction, so the RIS matches). Open it in the program
-with \code{File > Open}, then \verb{Graphs > Perform calculations}.
-}
-
-\section{Launching}{
-
-\code{\link[=tsa_launch]{tsa_launch()}} starts the program with \code{java -jar}. Java is not shipped:
-install a runtime from https://adoptium.net or set \code{JAVA_HOME}. Without
-Java or the program, \code{\link[=tsa_write]{tsa_write()}} still produces the file.
-}
-
-\section{Model mapping}{
-
-\verb{common = TRUE, random = FALSE} in \code{metabin()} maps to the program's
-Fixed Effect Model; \code{method.tau = "DL"} to Random-effects (DL);
-\code{"SJ"} to Random-effects (SJ); any other estimator is written as DL,
-with the R-side Z-curve keeping the estimator you chose.
 }
 

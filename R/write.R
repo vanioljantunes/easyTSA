@@ -3,75 +3,69 @@
 #
 # File format: plain text, tab-separated key/value lines inside
 # #METAANALYSIS, #TRIAL, #BOUNDARY and #GRAPH blocks, as in the files the
-# TSA program saves (see its sample "High perioperative oxygen SSI.TSA").
-# Numeric codes as observed in saved files:
+# TSA program saves. Numeric codes as observed in saved files:
 #     outcomeType     1 negative, -1 positive
 #     trialType       1 dichotomous, 2 continuous
-#     effectModel     10 Fixed, 11 Random DL, 12 Random BT, 13 Combined,
-#                     14 Hybrid DL, 15 Hybrid BT, 16 Random SJ
+#     effectModel     10 Fixed, 11 Random DL, 12 Random BT, 16 Random SJ
 #     effectMeasure   1 RR, 2 RD, 3 OR, 4 MD, 6 Peto OR
-#     boundary type   101 one-sided upper, 102 one-sided lower, 103 two-sided
-#     oisType         602 user defined, 603 estimate
-#     interventionEffectType 201 low-bias based, 202 user defined,
-#                     203 empirical, 204 RRR user defined, 205 RRR low-bias
-#     timeAxisScaling 302 sample size, 303 statistical information, 304 events
-#     heterogeneityCorrection 401 variance based (D2 from data),
+#     boundary type   103 two-sided
+#     oisType         603 estimate
+#     interventionEffectType 204 RRR user defined, 205 RRR low-bias based (program estimates)
+#     timeAxisScaling 302 sample size
+#     heterogeneityCorrection 401 model variance based (program estimates),
 #                     404 user defined value
 #     alphaSpendingFunction 501 O'Brien-Fleming
-#     betaSpendingFunction  802 O'Brien-Fleming (from the sample file)
+#     betaSpendingFunction  802 O'Brien-Fleming
 # ============================================================================
 
 .tsa_line <- function(key, value) paste0(key, "\t", paste(value, collapse = "\t"))
 
 #' Write a .TSA file for the Copenhagen Trial Unit TSA software
 #'
-#' Serialises the trials and settings of an `easytsa` object into the text
-#' format read by the TSA program (version 0.9.5.10 Beta), including one
-#' conventional boundary and one alpha-spending boundary with the same
-#' anticipated effect, diversity and power used in R.
+#' Serialises the trials and settings of a [tsa_request()] (or of an
+#' `easytsa` result that still carries its request) into the text format the
+#' TSA program reads, with one conventional boundary and one alpha-spending
+#' boundary carrying the anticipated effect, power and heterogeneity choices.
 #'
-#' @param x An `easytsa` object.
+#' @param x A `tsa_request` or `easytsa` object.
 #' @param file Output path (extension `.TSA` is added when missing).
-#' @param diversity_mode `"variance"` (default) lets the TSA program
-#'   estimate the heterogeneity correction (D2) from its own model ("Model
-#'   Variance Based"). `"user"` writes the diversity value used in R as a
-#'   user-defined correction instead, so the RIS in the program matches R
-#'   exactly.
 #' @param boundary_name Name of the alpha-spending boundary in the file.
 #'
 #' @return The path, invisibly.
 #' @examples
 #' m <- meta::metabin(event.e, n.e, event.c, n.c, data = atb_peecs,
 #'                    studlab = paste(author, year), sm = "RR")
-#' x <- tsa_create(m, rrr = 0.30)
-#' f <- tsa_write(x, tempfile(fileext = ".TSA"))
+#' req <- tsa_request(m, label.e = "ATB", label.c = "No ATB")
+#' f <- tsa_write(req, tempfile(fileext = ".TSA"))
 #' readLines(f)[1:15]
 #' @export
-tsa_write <- function(x, file, diversity_mode = c("variance", "user"),
-                      boundary_name = NULL) {
-  if (!inherits(x, "easytsa")) stop("`x` must be an easytsa object.")
-  diversity_mode <- match.arg(diversity_mode)
+tsa_write <- function(x, file, boundary_name = NULL) {
   if (!grepl("\\.tsa$", file, ignore.case = TRUE)) file <- paste0(file, ".TSA")
-  m <- x$meta; s <- x$settings; r <- x$ris; L <- x$looks
-  is_bin <- s$type == "binary"
+  if (inherits(x, "easytsa")) {
+    if (is.null(x$request)) stop("This easytsa object carries no request; write from tsa_request().")
+    x <- x$request
+  }
+  if (!inherits(x, "tsa_request")) {
+    stop("`x` must be a tsa_request (see tsa_request()) or an easytsa object.", call. = FALSE)
+  }
+  s <- x$settings; trials <- x$trials
 
-  effect_model <- if (s$model == "common") 10 else switch(
-    m$method.tau, DL = 11, SJ = 16, 11)
-  effect_measure <- switch(s$sm, RR = 1, RD = 2, OR = 3, MD = 4, 1)
-  zero_handling <- if (is_bin && isTRUE(m$incr > 0)) "Constant" else "Ignore"
-  zero_value <- if (is_bin && is.numeric(m$incr)) m$incr else 0
-  ci <- switch(as.character(m$level), "0.95" = "CI_950", "0.99" = "CI_990",
+  effect_model <- switch(s$model, fixed = 10, random_dl = 11, random_bt = 12,
+                         random_sj = 16, 11)
+  effect_measure <- switch(s$sm, RR = 1, RD = 2, OR = 3, 1)
+  zero_handling <- if (isTRUE(s$incr > 0)) "Constant" else "Ignore"
+  ci <- switch(as.character(s$level), "0.95" = "CI_950", "0.99" = "CI_990",
                "0.995" = "CI_995", "0.999" = "CI_999", "CI_950")
 
   out <- c(
     "#METAANALYSIS BEGIN",
     .tsa_line("identifier", s$title),
     .tsa_line("outcomeType", if (s$outcome == "negative") 1 else -1),
-    .tsa_line("trialType", if (is_bin) 1 else 2),
+    .tsa_line("trialType", 1),
     .tsa_line("effectModel", effect_model),
     .tsa_line("effectMeasure", effect_measure),
     .tsa_line("zeroEventHandling", zero_handling),
-    .tsa_line("zeroEventValue", zero_value),
+    .tsa_line("zeroEventValue", s$incr),
     .tsa_line("ignoreZeroEventsTrials", "false"),
     .tsa_line("confidenceInterval", ci),
     .tsa_line("confidenceIntervalAlphaSpendingBoundary", ""),
@@ -81,35 +75,21 @@ tsa_write <- function(x, file, diversity_mode = c("variance", "user"),
     "#METAANALYSIS END", ""
   )
 
-  ord <- match(L$studlab, m$studlab)
-  for (i in seq_len(nrow(L))) {
-    j <- ord[i]
-    trial <- if (is_bin) c(
+  trials <- trials[order(trials$year, trials$studlab), ]
+  for (i in seq_len(nrow(trials))) {
+    out <- c(out,
       "#TRIAL BEGIN",
       .tsa_line("sort", "dichotomous"),
-      .tsa_line("year", L$year[i]),
-      .tsa_line("study", L$studlab[i]),
-      .tsa_line("interventionEvent", format(m$event.e[j], nsmall = 1)),
-      .tsa_line("interventionTotal", format(m$n.e[j], nsmall = 1)),
-      .tsa_line("controlEvent", format(m$event.c[j], nsmall = 1)),
-      .tsa_line("controlTotal", format(m$n.c[j], nsmall = 1))
-    ) else c(
-      "#TRIAL BEGIN",
-      .tsa_line("sort", "continuous"),
-      .tsa_line("year", L$year[i]),
-      .tsa_line("study", L$studlab[i]),
-      .tsa_line("interventionGroupSize", format(m$n.e[j], nsmall = 1)),
-      .tsa_line("interventionMeanReponse", m$mean.e[j]),
-      .tsa_line("interventionStandardDeviation", m$sd.e[j]),
-      .tsa_line("controlGroupSize", format(m$n.c[j], nsmall = 1)),
-      .tsa_line("controlMeanReponse", m$mean.c[j]),
-      .tsa_line("controlStandardDeviation", m$sd.c[j])
-    )
-    out <- c(out, trial,
-             .tsa_line("isHighQuality", "true"),
-             .tsa_line("isForcefullyIgnored", "false"),
-             .tsa_line("comment", ""),
-             "#TRIAL END", "")
+      .tsa_line("year", trials$year[i]),
+      .tsa_line("study", trials$studlab[i]),
+      .tsa_line("interventionEvent", format(trials$event.e[i], nsmall = 1)),
+      .tsa_line("interventionTotal", format(trials$n.e[i], nsmall = 1)),
+      .tsa_line("controlEvent", format(trials$event.c[i], nsmall = 1)),
+      .tsa_line("controlTotal", format(trials$n.c[i], nsmall = 1)),
+      .tsa_line("isHighQuality", "true"),
+      .tsa_line("isForcefullyIgnored", "false"),
+      .tsa_line("comment", ""),
+      "#TRIAL END", "")
   }
 
   alpha_pct <- 100 * s$alpha; beta_pct <- 100 * s$beta
@@ -127,56 +107,47 @@ tsa_write <- function(x, file, diversity_mode = c("variance", "user"),
     graph(conv_name, c(155, 0, 0)),
     "#BOUNDARY END", "")
 
-  het_code <- if (diversity_mode == "user") 404 else 401
-  het_value <- if (diversity_mode == "user") round(s$diversity_value, 4) else 0
+  user_effect <- identical(s$effect_type, "user")
+  user_d2 <- !identical(s$diversity, "estimate")
   if (is.null(boundary_name)) {
-    boundary_name <- if (is_bin) {
-      sprintf("RRR %.0f%%, D2 %.0f%%, power %.0f%%", 100 * r$rrr,
-              100 * s$diversity_value, 100 * (1 - s$beta))
-    } else {
-      sprintf("MD %.3g, D2 %.0f%%, power %.0f%%", r$md,
-              100 * s$diversity_value, 100 * (1 - s$beta))
-    }
+    boundary_name <- sprintf("%s, D2 %s, power %.0f%%",
+      if (user_effect) sprintf("RRR %.0f%%", 100 * s$rrr) else "RRR estimated",
+      if (user_d2) sprintf("%.0f%%", 100 * s$diversity) else "estimated",
+      100 * (1 - s$beta))
   }
-  seq_block <- c(
+  out <- c(out,
     "#BOUNDARY BEGIN",
-    .tsa_line("sort", if (is_bin) "sequential dichotome" else "sequential continuous"),
+    .tsa_line("sort", "sequential dichotome"),
     .tsa_line("identifier", boundary_name),
     .tsa_line("type", 103),
     .tsa_line("type1error", format(alpha_pct, nsmall = 1)),
     .tsa_line("oisType", 603),
     .tsa_line("manualOIS", "0.0"),
-    .tsa_line("type2error", format(beta_pct, nsmall = 1))
-  )
-  seq_block <- c(seq_block, if (is_bin) c(
-    .tsa_line("interventionEffectType", 204),
-    .tsa_line("interventionEffect", round(100 * r$intervention, 2)),
-    .tsa_line("controlEffect", round(100 * r$control, 2))
-  ) else c(
-    .tsa_line("meanType", 202),
-    .tsa_line("mean", r$md),
-    .tsa_line("varianceType", 202),
-    .tsa_line("variance", r$variance)
-  ))
-  seq_block <- c(seq_block,
+    .tsa_line("type2error", format(beta_pct, nsmall = 1)),
+    .tsa_line("interventionEffectType", if (user_effect) 204 else 205),
+    # in "estimate" mode the program replaces these; crude pooled proportions
+    # are written as placeholders (zeros make the program's estimator loop)
+    .tsa_line("interventionEffect", round(100 * if (user_effect) s$intervention else
+                                          sum(trials$event.e) / sum(trials$n.e), 2)),
+    .tsa_line("controlEffect", round(100 * if (user_effect) s$control else
+                                     sum(trials$event.c) / sum(trials$n.c), 2)),
     .tsa_line("timeAxisScaling", 302),
-    .tsa_line("heterogeneityCorrection", het_code),
-    .tsa_line("heterogeneityCorrectionValue", het_value),
+    .tsa_line("heterogeneityCorrection", if (user_d2) 404 else 401),
+    .tsa_line("heterogeneityCorrectionValue", if (user_d2) round(s$diversity, 4) else "0.0"),
     .tsa_line("alphaSpendingFunction", 501),
     if (isTRUE(s$futility)) .tsa_line("betaSpendingFunction", 802),
-    .tsa_line("trials", paste0("(", L$year, ")", L$studlab)),
+    .tsa_line("trials", paste0("(", trials$year, ")", trials$studlab)),
     graph(boundary_name, c(255, 0, 0)),
     "#BOUNDARY END", "")
-  out <- c(out, seq_block)
   writeLines(out, file, useBytes = FALSE)
   invisible(file)
 }
 
 #' Read a .TSA file into a data frame
 #'
-#' Parses the trials of a `.TSA` file (TSA software format) into a data
-#' frame ready for [meta::metabin()] or [meta::metacont()]. Settings of the
-#' meta-analysis block are returned as attributes.
+#' Parses the trials of a `.TSA` file (TSA program format) into a data
+#' frame ready for [meta::metabin()]. Settings of the meta-analysis block
+#' are returned as attributes.
 #'
 #' @param file Path to a `.TSA` file.
 #' @return A data frame with `studlab`, `year` and either

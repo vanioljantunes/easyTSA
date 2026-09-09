@@ -5,7 +5,7 @@
 #' dissection (ESD), outcome post-ESD electrocoagulation syndrome (PEECS).
 #' Main outcome of a MetaHub mentorship project (2026), used here as the
 #' worked example. Event counts favour the intervention when the relative
-#' risk is below 1 (`outcome = "negative"` in [tsa_create()]).
+#' risk is below 1 (`outcome = "negative"` in [tsa_run()]).
 #'
 #' @format A data frame with 7 rows and 9 columns:
 #' \describe{
@@ -23,5 +23,5 @@
 #' atb_peecs
 #' m <- meta::metabin(event.e, n.e, event.c, n.c, data = atb_peecs,
 #'                    studlab = paste(author, year), sm = "RR")
-#' tsa_create(m, rrr = 0.30)
+#' tsa_request(m, control = 0.12, rrr = 0.30)
 "atb_peecs"

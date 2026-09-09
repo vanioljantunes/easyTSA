@@ -4,8 +4,8 @@
 \alias{easyTSA-3-plot}
 \title{Guide 3: customising the plot}
 \description{
-\code{\link[=tsa_plot]{tsa_plot()}} returns a \code{ggplot}, so the usual \code{+} grammar applies on top
-of its own arguments.
+\code{\link[=tsa_plot]{tsa_plot()}} draws the program's numbers with \code{ggplot2}, so the usual \code{+}
+grammar applies on top of its own arguments.
 }
 \section{Arguments}{
 
@@ -23,20 +23,10 @@ of its own arguments.
 }\if{html}{\out{</div>}}
 }
 
-\section{Adding layers}{
+\section{Adding layers and saving}{
 
 
-\if{html}{\out{<div class="sourceCode r">}}\preformatted{tsa_plot(x) +
-  ggplot2::theme_classic(base_size = 13) +
-  ggplot2::annotate("text", x = 800, y = -5, label = "Inner wedge",
-                    colour = "#c0392b")
-}\if{html}{\out{</div>}}
-}
-
-\section{Saving}{
-
-
-\if{html}{\out{<div class="sourceCode r">}}\preformatted{p <- tsa_plot(x)
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{p <- tsa_plot(x) + ggplot2::theme_classic(base_size = 13)
 ggplot2::ggsave("tsa_peecs.png", p, width = 9, height = 5.5, dpi = 300)
 }\if{html}{\out{</div>}}
 }

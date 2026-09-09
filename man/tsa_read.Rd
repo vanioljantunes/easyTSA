@@ -15,9 +15,9 @@ A data frame with \code{studlab}, \code{year} and either
 Attribute \code{"settings"} holds the meta-analysis block as a named list.
 }
 \description{
-Parses the trials of a \code{.TSA} file (TSA software format) into a data
-frame ready for \code{\link[meta:metabin]{meta::metabin()}} or \code{\link[meta:metacont]{meta::metacont()}}. Settings of the
-meta-analysis block are returned as attributes.
+Parses the trials of a \code{.TSA} file (TSA program format) into a data
+frame ready for \code{\link[meta:metabin]{meta::metabin()}}. Settings of the meta-analysis block
+are returned as attributes.
 }
 \examples{
 f <- system.file("extdata", "atb_peecs.TSA", package = "easyTSA")

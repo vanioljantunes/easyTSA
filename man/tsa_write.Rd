@@ -4,23 +4,12 @@
 \alias{tsa_write}
 \title{Write a .TSA file for the Copenhagen Trial Unit TSA software}
 \usage{
-tsa_write(
-  x,
-  file,
-  diversity_mode = c("variance", "user"),
-  boundary_name = NULL
-)
+tsa_write(x, file, boundary_name = NULL)
 }
 \arguments{
-\item{x}{An \code{easytsa} object.}
+\item{x}{A \code{tsa_request} or \code{easytsa} object.}
 
 \item{file}{Output path (extension \code{.TSA} is added when missing).}
-
-\item{diversity_mode}{\code{"variance"} (default) lets the TSA program
-estimate the heterogeneity correction (D2) from its own model ("Model
-Variance Based"). \code{"user"} writes the diversity value used in R as a
-user-defined correction instead, so the RIS in the program matches R
-exactly.}
 
 \item{boundary_name}{Name of the alpha-spending boundary in the file.}
 }
@@ -28,15 +17,15 @@ exactly.}
 The path, invisibly.
 }
 \description{
-Serialises the trials and settings of an \code{easytsa} object into the text
-format read by the TSA program (version 0.9.5.10 Beta), including one
-conventional boundary and one alpha-spending boundary with the same
-anticipated effect, diversity and power used in R.
+Serialises the trials and settings of a \code{\link[=tsa_request]{tsa_request()}} (or of an
+\code{easytsa} result that still carries its request) into the text format the
+TSA program reads, with one conventional boundary and one alpha-spending
+boundary carrying the anticipated effect, power and heterogeneity choices.
 }
 \examples{
 m <- meta::metabin(event.e, n.e, event.c, n.c, data = atb_peecs,
                    studlab = paste(author, year), sm = "RR")
-x <- tsa_create(m, rrr = 0.30)
-f <- tsa_write(x, tempfile(fileext = ".TSA"))
+req <- tsa_request(m, label.e = "ATB", label.c = "No ATB")
+f <- tsa_write(req, tempfile(fileext = ".TSA"))
 readLines(f)[1:15]
 }

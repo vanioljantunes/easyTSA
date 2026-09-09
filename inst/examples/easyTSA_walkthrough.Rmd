@@ -1,5 +1,5 @@
 ---
-title: "easyTSA: Trial Sequential Analysis from a meta object"
+title: "easyTSA: Trial Sequential Analysis run by the TSA program, from a meta object"
 output: html_document
 ---
 
@@ -15,6 +15,15 @@ if (!requireNamespace("easyTSA", quietly = TRUE)) {
 }
 pacman::p_load(meta, readxl, rstudioapi, ggplot2)
 library(easyTSA)
+```
+
+```{r tsa program}
+# once per machine: download TSA from https://ctu.dk/tsa/, unzip, and point R to it
+# (a Java runtime is needed, https://adoptium.net)
+if (!nzchar(Sys.getenv("TSA_HOME"))) {
+  Sys.setenv(TSA_HOME = "C:/Users/vanio/Desktop/TSA 0.9.5.10 Beta")
+}
+tsa_engine()   # starts the program's engine inside R; errors say what is missing
 ```
 
 ```{r import data}
@@ -53,6 +62,8 @@ outcome.name <- "Post-ESD electrocoagulation syndrome"
 intervention.name <- "ATB"
 control.name <- "No ATB"
 
+# only trials, events, totals and labels are used by the TSA program;
+# it fits its own model (DerSimonian-Laird) and continuity correction
 m <- metabin(event.e, n.e, event.c, n.c, studlab = studlab, data = data,
              sm = "RR", method = "MH", method.tau = "REML",
              random = TRUE, common = FALSE)
@@ -60,20 +71,23 @@ m
 ```
 
 ```{r tsa}
-# defaults: 5% two-sided conventional boundary, O'Brien-Fleming alpha-spending
-# boundary on the sample-size axis, 80% power, anticipated effect from the
-# weight-averaged arm proportions of the meta output, RIS corrected by D2
-x <- tsa_create(m,
-                label.e = intervention.name, label.c = control.name,
-                title = outcome.name,
-                outcome = "negative")   # event is a harm: RR < 1 favours ATB
+# program defaults: 5% two-sided conventional boundary, O'Brien-Fleming
+# alpha-spending boundary on the sample-size axis, 80% power, anticipated
+# effect "Estimate", heterogeneity correction "Model Variance Based",
+# inner wedge on. Every number below is computed by the TSA program.
+x <- tsa_run(m,
+             label.e = intervention.name, label.c = control.name,
+             title = outcome.name,
+             outcome = "negative",          # event is a harm: RR < 1 favours ATB
+             file = paste0(mwd, "/tsa_empirical.TSA"))   # keep the program file
 x
 summary(x)
 
-# same, with a clinically anticipated effect instead of the empirical one
-x30 <- tsa_create(m, rrr = 0.30, control = 0.12,
-                  label.e = intervention.name, label.c = control.name,
-                  title = outcome.name)
+# clinically anticipated effect instead of the empirical one
+x30 <- tsa_run(m, control = 0.12, rrr = 0.30,
+               label.e = intervention.name, label.c = control.name,
+               title = outcome.name,
+               file = paste0(mwd, "/tsa_rrr30.TSA"))
 x30
 ```
 
@@ -98,12 +112,7 @@ p <- tsa_plot(x,
 print(p)
 ```
 
-```{r tsa file}
-# file for the Copenhagen Trial Unit TSA program (File > Open in the program)
-tsa_write(x, paste0(mwd, "/tsa_empirical.TSA"))
-tsa_write(x30, paste0(mwd, "/tsa_rrr30.TSA"))
-
-# to launch the program from R, install TSA from https://ctu.dk/tsa/ and:
-# Sys.setenv(TSA_HOME = "C:/path/to/TSA 0.9.5.10 Beta")
+```{r program window}
+# open the same analysis in the program's own window (File > Open the .TSA file)
 # tsa_launch(x)
 ```

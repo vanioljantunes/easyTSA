@@ -4,40 +4,53 @@
 \alias{easyTSA-1-workflow}
 \title{Guide 1: workflow, from a meta object to a TSA plot}
 \description{
-A Trial Sequential Analysis (TSA) asks whether a cumulative meta-analysis
-has enough information to be trusted. \code{easyTSA} reads a fitted
-\code{meta::metabin()} (or \code{metacont()}) object, so nothing has to be typed
-twice.
+\code{easyTSA} does not compute a Trial Sequential Analysis itself. It hands
+your meta-analysis to the Copenhagen Trial Unit TSA program, lets the
+program do every calculation, and brings the numbers back to R.
 }
+\section{Step 0, once per machine}{
+
+Download the TSA program from \url{https://ctu.dk/tsa/}, unzip it, install a
+Java runtime (\url{https://adoptium.net}), and tell R where the program is:
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{Sys.setenv(TSA_HOME = "C:/Users/me/TSA 0.9.5.10 Beta")   # folder with TSA.jar
+}\if{html}{\out{</div>}}
+
+Put that line in your \code{.Rprofile} to make it permanent.
+}
+
 \section{Step 1, fit the meta-analysis as usual}{
 
 
 \if{html}{\out{<div class="sourceCode r">}}\preformatted{library(meta); library(easyTSA)
 m <- metabin(event.e, n.e, event.c, n.c, data = atb_peecs,
-             studlab = paste(author, year), sm = "RR",
-             method = "MH", method.tau = "REML",
-             random = TRUE, common = FALSE)
+             studlab = paste(author, year), sm = "RR")
 }\if{html}{\out{</div>}}
 
-Any \code{metabin} settings are respected: the Z-curve uses the same effect
-measure, model and continuity correction as the forest plot.
+Only the trials (events, totals, labels, years) are taken from \code{m}. The
+program fits its own model (DerSimonian-Laird by default) and applies its
+own continuity correction.
 }
 
-\section{Step 2, create the TSA}{
+\section{Step 2, run the program}{
 
 
-\if{html}{\out{<div class="sourceCode r">}}\preformatted{x <- tsa_create(m, rrr = 0.30, label.e = "ATB", label.c = "No ATB",
-                title = "PEECS after ESD")
-x            # one-screen summary
-summary(x)   # per-look table and TSA-adjusted CI
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{x <- tsa_run(m, label.e = "ATB", label.c = "No ATB", title = "PEECS after ESD")
+x            # RIS, D2, conclusion, all from the program
+summary(x)   # per-look table: N, information fraction, Z, boundaries
 }\if{html}{\out{</div>}}
 
-The three decisions you must make are the anticipated effect (\code{rrr}, or
-\code{md} for continuous data), the control-group risk (\code{control}, defaults to
-the pooled control risk of \code{m}) and the heterogeneity adjustment
-(\code{diversity}, defaults to the D-squared of \code{m}). Leaving \code{rrr} empty
-uses the pooled estimate itself ("empirical"), which is the least
-conservative choice; prefer a clinically minimal effect.
+Defaults are the program's defaults: two-sided 5\% conventional boundary,
+O'Brien-Fleming alpha-spending boundary on the sample-size axis, 80\% power,
+anticipated effect "Estimate" (from the meta-analysed data), heterogeneity
+correction "Model Variance Based" (D-squared from the program's model),
+inner wedge on.
+
+To use a clinically chosen effect instead:
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{tsa_run(m, control = 0.12, rrr = 0.30)          # RRR 30\%, control risk 12\%
+tsa_run(m, control = 0.12, rrr = 0.30, diversity = 0.5)   # user D2
+}\if{html}{\out{</div>}}
 }
 
 \section{Step 3, plot}{
@@ -47,21 +60,14 @@ conservative choice; prefer a clinically minimal effect.
 tsa_plot(x, show_labels = TRUE)
 }\if{html}{\out{</div>}}
 
-See \link{easyTSA-3-plot} for every knob.
+See \link{easyTSA-3-plot}.
 }
 
-\section{Step 4, optional, open in the TSA program}{
+\section{Step 4, optional, open in the program's interface}{
 
 
-\if{html}{\out{<div class="sourceCode r">}}\preformatted{tsa_write(x, "peecs.TSA")   # file for the Java program
-tsa_launch(x)               # writes and starts the program (needs Java)
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{tsa_write(x, "peecs.TSA")   # same file the engine used
+tsa_launch(x)               # starts the program; File > Open the file
 }\if{html}{\out{</div>}}
-}
-
-\section{Trial order}{
-
-Looks are ordered by \code{sortvar} (default: the \code{year} column of the data
-used in \code{m}). Cumulative sample size is the information axis, as in the
-TSA program's default ("sample size" scaling).
 }
 

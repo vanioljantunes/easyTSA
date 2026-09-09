@@ -1,29 +1,6 @@
 # ============================================================================
-# launch.R  -  open the TSA software (Java, user-installed) on a .TSA file
+# launch.R  -  open the TSA program's own interface on a .TSA file
 # ============================================================================
-
-#' Locate the TSA software
-#'
-#' The Copenhagen Trial Unit's TSA program is free to use but its license
-#' does not allow redistribution, so it is not bundled. Download it from
-#' <https://ctu.dk/tsa/> and tell easyTSA where `TSA.jar` lives with the
-#' environment variable `TSA_HOME` (the folder containing `TSA.jar`), or
-#' `options(easyTSA.jar = "path/to/TSA.jar")`, or the `jar` argument of
-#' [tsa_launch()]. Running it requires a Java runtime (Java 8 or later).
-#'
-#' @param jar Optional explicit path to `TSA.jar`.
-#' @return Path to `TSA.jar`, or `""` when not found.
-#' @examples
-#' tsa_jar()
-#' @export
-tsa_jar <- function(jar = NULL) {
-  home <- Sys.getenv("TSA_HOME")
-  cand <- c(jar, getOption("easyTSA.jar"),
-            if (nzchar(home)) file.path(home, "TSA.jar"))
-  if (!length(cand)) return("")
-  cand <- cand[nzchar(cand) & file.exists(cand)]
-  if (length(cand)) normalizePath(cand[1]) else ""
-}
 
 #' Launch the TSA software
 #'
@@ -52,7 +29,7 @@ tsa_jar <- function(jar = NULL) {
 #' @export
 tsa_launch <- function(x, file = tempfile(fileext = ".TSA"), java = NULL,
                        jar = NULL, wait = FALSE) {
-  path <- if (inherits(x, "easytsa")) tsa_write(x, file) else x
+  path <- if (inherits(x, c("easytsa", "tsa_request"))) tsa_write(x, file) else x
   if (!file.exists(path)) stop("File not found: ", path)
   path <- normalizePath(path)
   if (is.null(java)) {

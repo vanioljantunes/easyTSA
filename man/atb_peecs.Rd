@@ -29,12 +29,12 @@ antibiotics (ATB) versus no antibiotics around endoscopic submucosal
 dissection (ESD), outcome post-ESD electrocoagulation syndrome (PEECS).
 Main outcome of a MetaHub mentorship project (2026), used here as the
 worked example. Event counts favour the intervention when the relative
-risk is below 1 (\code{outcome = "negative"} in \code{\link[=tsa_create]{tsa_create()}}).
+risk is below 1 (\code{outcome = "negative"} in \code{\link[=tsa_run]{tsa_run()}}).
 }
 \examples{
 atb_peecs
 m <- meta::metabin(event.e, n.e, event.c, n.c, data = atb_peecs,
                    studlab = paste(author, year), sm = "RR")
-tsa_create(m, rrr = 0.30)
+tsa_request(m, control = 0.12, rrr = 0.30)
 }
 \keyword{datasets}

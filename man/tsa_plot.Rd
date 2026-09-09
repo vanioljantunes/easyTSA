@@ -27,7 +27,7 @@ tsa_plot(
 )
 }
 \arguments{
-\item{x}{An \code{easytsa} object from \code{\link[=tsa_create]{tsa_create()}}.}
+\item{x}{An \code{easytsa} object from \code{\link[=tsa_run]{tsa_run()}}.}
 
 \item{title}{Plot title (default: the analysis title).}
 
@@ -69,10 +69,8 @@ wedge, conventional limits and RIS) as a \code{ggplot} object, so any layer or
 theme can be added afterwards.
 }
 \examples{
-m <- meta::metabin(event.e, n.e, event.c, n.c, data = atb_peecs,
-                   studlab = paste(author, year), sm = "RR",
-                   method.tau = "REML", random = TRUE, common = FALSE)
-x <- tsa_create(m, rrr = 0.30, label.e = "ATB", label.c = "No ATB")
+# result produced by the TSA program on the bundled example (no Java needed)
+x <- readRDS(system.file("extdata", "atb_peecs_result.rds", package = "easyTSA"))
 tsa_plot(x)
 tsa_plot(x, show_labels = TRUE, col_z = "black") +
   ggplot2::theme_classic()

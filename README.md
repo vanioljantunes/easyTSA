@@ -1,143 +1,105 @@
 # easyTSA
 
-**Trial Sequential Analysis for `meta` objects, in R.**
+**Trial Sequential Analysis for `meta` objects, computed by the TSA program itself.**
 
 ---
 
 ## 1. What is this package
 
-`easyTSA` runs a Trial Sequential Analysis (TSA, Copenhagen Trial Unit)
-on a meta-analysis you have already fitted with the
-[`meta`](https://cran.r-project.org/package=meta) package, and draws
-the familiar TSA graph with `ggplot2`. It does not replace the TSA
-program: it makes the common path (a `metabin()` object in, a TSA
-plot and a `.TSA` file out) a three-line job, and it can hand the same
-analysis to the original Java program.
+`easyTSA` runs a Trial Sequential Analysis (TSA) on a meta-analysis you
+fitted with the [`meta`](https://cran.r-project.org/package=meta)
+package. It does not reimplement the statistics. It writes your trials to
+the Copenhagen Trial Unit TSA program's own file, runs that program's
+calculation engine inside R (headless, through `rJava`), and brings the
+program's numbers back: required information size, cumulative Z-curve,
+monitoring boundaries, inner wedge, heterogeneity, conclusion. Then it
+draws the TSA graph with `ggplot2` so you can restyle it for a manuscript.
 
 **What you get:**
 
-- **`tsa_create()`** - required information size (RIS) with
-  D-squared heterogeneity adjustment, cumulative Z-curve in trial
-  order, Lan-DeMets O'Brien-Fleming monitoring boundaries, futility
-  boundaries (inner wedge), TSA-adjusted confidence interval and a
-  plain-language conclusion. Reads every setting (effect measure,
-  model, continuity correction) from the `meta` object.
-- **`tsa_plot()`** - the TSA graph as a `ggplot` you can restyle or
-  extend with `+`.
-- **`summary()`** - per-look table (N, information fraction, Z,
-  boundaries) and conventional vs TSA-adjusted CI.
-- **`tsa_write()` / `tsa_read()`** - `.TSA` files in the format of the
-  TSA program (version 0.9.5.10 Beta), both directions.
-- **`tsa_launch()`** - starts the TSA program on the file (needs Java
-  and the program, see section 6).
-- **Building blocks** - `tsa_ris()`, `tsa_diversity()`,
-  `tsa_bounds()`, `tsa_futility()`, `tsa_spending()` for anyone who
-  wants the numbers without the wrapper.
+- **`tsa_run()`** - `metabin` object in, TSA program results out.
+- **`tsa_plot()`** - the TSA graph as a `ggplot` (title, labels, colours,
+  layers all adjustable).
+- **`summary()`** - per-look table and boundary-adjusted CI.
+- **`tsa_request()` / `tsa_write()` / `tsa_read()`** - build and exchange
+  `.TSA` files (open them in the program's interface, read the program's
+  files back).
+- **`tsa_engine()` / `tsa_jar()` / `tsa_launch()`** - locate, start and
+  open the program.
 
 ---
 
-## 2. How to install it
+## 2. Install
 
 ```r
 # install.packages("remotes")
 remotes::install_github("vanioljantunes/easyTSA")
 ```
 
-Dependencies: `meta`, `ggplot2`. Nothing else.
+Then, once per machine:
+
+1. Install a Java runtime (8 or later), e.g. from <https://adoptium.net>.
+2. Download the TSA program from <https://ctu.dk/tsa/> and unzip it. It is
+   free to use but its license forbids redistribution, so it is not
+   bundled.
+3. Tell R where it is (put this in your `.Rprofile`):
+
+```r
+Sys.setenv(TSA_HOME = "C:/Users/me/TSA 0.9.5.10 Beta")   # folder containing TSA.jar
+```
 
 ---
 
 ## 3. Worked example: prophylactic antibiotics and PEECS after ESD
-
-The bundled dataset `atb_peecs` holds the seven comparative studies of
-prophylactic antibiotics (ATB) versus none for post-ESD
-electrocoagulation syndrome (PEECS).
 
 ```r
 library(meta)
 library(easyTSA)
 
 m <- metabin(event.e, n.e, event.c, n.c, data = atb_peecs,
-             studlab = paste(author, year), sm = "RR",
-             method = "MH", method.tau = "REML",
-             random = TRUE, common = FALSE)
+             studlab = paste(author, year), sm = "RR")
 
-x <- tsa_create(m, label.e = "ATB", label.c = "No ATB",
-                title = "Prophylactic antibiotics and PEECS after ESD")
+x <- tsa_run(m, label.e = "ATB", label.c = "No ATB",
+             title = "Prophylactic antibiotics and PEECS after ESD")
 x
-```
-
-Defaults: 5% two-sided conventional boundary, alpha-spending boundary
-on the sample-size axis with 80% power, anticipated effect taken from
-the meta output (each arm's event proportion averaged with the model
-weights), and the RIS inflated by the diversity D-squared of the model.
-
-```
-Trial Sequential Analysis: Prophylactic antibiotics and PEECS after ESD
-  ATB vs No ATB, RR, random model, 7 trials, 2156 participants
-  Anticipated effect (empirical, weighted arms): control 28.17%, intervention 19.16%, RRR 32.0%
-  alpha 0.05 (two-sided), power 80%, OBF spending
-  Diversity adjustment: D2 = 35.6% (factor 1.55)
-  RIS = 1085 (fixed-effect RIS = 698); information fraction 198.7%
-  Cumulative Z = 1.84; boundary at last look = 1.96
-  Conclusion: Futility boundary crossed at look 3 (Hastier-De Chelle A 2022):
-  the anticipated effect can be rejected.
-```
-
-```r
-summary(x)
-```
-
-```
- Look                    Study Year    N    IF     Z Boundary Futility
-    1              Lee SP 2017 2017  100 0.092 1.996    8.000
-    2          Shichijo S 2022 2022  480 0.442 1.306    3.187    0.244
-    3 Hastier-De Chelle A 2022 2022  706 0.651 0.500    2.554    0.971
-    4               Qiu J 2024 2024 1261 1.162 0.432    1.960
-    5              Liao F 2024 2024 1813 1.671 0.883    1.960
-    6             Zhao YR 2025 2025 2075 1.912 1.199    1.960
-    7              Chen T 2025 2025 2156 1.987 1.841    1.960
-
-Final estimate (RR):
-         type estimate lower upper z_boundary
- conventional    0.748  0.55 1.019       1.96
- TSA-adjusted    0.748  0.55 1.019       1.96
-```
-
-```r
+summary(x)                 # per-look table: N, IF, Z, boundary, futility
 tsa_plot(x, show_labels = TRUE)
 ```
 
 ![TSA plot](man/figures/tsa_peecs.png)
 
-Reading: the blue squares are the cumulative Z after each study, the red
-diamonds the monitoring boundaries, the dashed wedge the futility
-boundaries, the vertical line the RIS. The Z-curve entered the inner
-wedge at the third study and the RIS has been passed twice over, so an
-effect of the empirical size (RRR 32%) can be rejected; the final
-estimate stays below conventional significance.
+Defaults are the program's defaults: two-sided 5% conventional boundary,
+O'Brien-Fleming alpha-spending boundary on the sample-size axis, 80%
+power, anticipated effect "Estimate", heterogeneity correction "Model
+Variance Based", inner wedge on.
 
-A clinically chosen effect instead of the empirical one:
+Clinically chosen effect instead of the empirical one:
 
 ```r
-tsa_create(m, rrr = 0.30, control = 0.12)   # RIS 3447, IF 63%, inconclusive
+tsa_run(m, control = 0.12, rrr = 0.30)
+tsa_run(m, control = 0.12, rrr = 0.30, diversity = 0.5)   # user-defined D2
 ```
 
 ---
 
-## 4. The three decisions
+## 4. Verified against the program's interface
 
-| Argument | Meaning | Default |
-|---|---|---|
-| `rrr` (or `md`) | anticipated relative risk reduction (mean difference) | "empirical": `1 - p_e / p_c` from the weighted arm proportions of `m` |
-| `control` | anticipated control-group risk | weight-averaged control-arm proportion of `m` |
-| `intervention` | anticipated intervention-group risk (alternative to `rrr`) | weight-averaged intervention-arm proportion of `m` |
-| `diversity` | heterogeneity adjustment of the RIS | `"D2"` from `m`; also `"I2"`, `"none"`, or a number |
+For the bundled example with a user-defined effect (control 28.17%,
+intervention 19.16%) and user D² 35.62%, `tsa_run()` returns what the
+program's own window shows:
 
-Other settings: `alpha` (0.05), `beta` (0.20), `futility` (TRUE),
-`model` ("random" or "common"), `outcome` ("negative" = event is a
-harm, so RR < 1 favours the intervention), `sortvar` (trial order,
-default the `year` column).
+| Look | N | IF | Z | Boundary |
+|---|---|---|---|---|
+| Lee 2017 | 100 | 0.092 | 4.159 | 7.293 |
+| Hastier 2022 | 326 | 0.300 | 0.029 | 3.909 |
+| Shichijo 2022 | 706 | 0.650 | 0.637 | 2.544 |
+| Liao 2024 | 1258 | 1.159 | 1.356 | 1.96 |
+| Qiu 2024 | 1813 | 1.670 | 0.843 | 1.96 |
+| Chen 2025 | 1894 | 1.744 | 1.474 | 1.96 |
+| Zhao 2025 | 2156 | 1.986 | 1.634 | 1.96 |
+
+RIS 1086, D² (model variance based) 56.76%, pooled RR 0.735. These are
+the package's test cases (run when `TSA_HOME` is set).
 
 ---
 
@@ -156,55 +118,32 @@ tsa_plot(x,
 ggplot2::ggsave("tsa.png", tsa_plot(x), width = 9, height = 5.5, dpi = 300)
 ```
 
-See `?"easyTSA-3-plot"`.
-
 ---
 
-## 6. The TSA program
-
-The TSA program is free to use but its license does not allow
-redistribution, so it is not bundled. Download it from
-<https://ctu.dk/tsa/>, unzip, and point easyTSA to it:
+## 6. Files and the program's interface
 
 ```r
-Sys.setenv(TSA_HOME = "C:/Users/me/TSA 0.9.5.10 Beta")   # folder with TSA.jar
-tsa_write(x, "peecs.TSA")   # file only
-tsa_launch(x)               # writes the file and starts the program
+tsa_write(x, "peecs.TSA")     # the file the engine used; File > Open in the program
+tsa_launch(x)                 # writes the file and starts the program's window
+d <- tsa_read("peecs.TSA")    # trials from a program file back into R
 ```
 
-The file carries the trials, a conventional boundary and an
-alpha-spending boundary with the same RRR, power and diversity used in
-R (as user-defined values, so the RIS matches). In the program:
-`File > Open`, then perform the calculations.
+`tsa_request()` builds the request (and `tsa_write()` the file) without
+the program installed, e.g. to hand a file to a co-author.
 
 ---
 
 ## 7. Documentation
 
 ```r
-?easyTSA                 # overview
-?"easyTSA-1-workflow"    # from meta object to plot
-?"easyTSA-2-theory"      # RIS, boundaries, wedge, adjusted CI
+?easyTSA
+?"easyTSA-1-workflow"    # setup and the three calls
+?"easyTSA-2-results"     # what comes back, argument to program option
 ?"easyTSA-3-plot"        # plot options
-?"easyTSA-4-software"    # the TSA program
+?"easyTSA-4-software"    # the program and the engine
 ```
 
-## 8. Method notes
+## 8. License
 
-- RIS follows the TSA manual equation 1: `4 (z_{1-a/2} + z_{1-b})^2
-  sigma^2 / delta^2`, inflated by `1 / (1 - D^2)` with
-  `D^2 = 1 - v_fixed / v_random` taken from the `meta` object.
-- Boundaries are computed by the Lan-DeMets recursive integration with
-  the O'Brien-Fleming-type spending function, spending `alpha / 2` per
-  side (the convention of the Lan-DeMets program the TSA software uses;
-  four equal looks at 5% give 4.33, 2.96, 2.36, 2.01). Boundaries are
-  truncated at 8 and drawn out to the RIS.
-- Futility boundaries spend `beta` under the drift of the anticipated
-  effect and are shown once they emerge above zero.
-- The Z-curve uses `meta`'s own estimates, so any `method.tau` works;
-  use `method.tau = "DL"` to match the program's default model.
-
-## 9. License
-
-MIT. The TSA program and its manual are copyright Copenhagen Trial
-Unit and are not part of this package.
+MIT for this package. The TSA program and its manual are copyright
+Copenhagen Trial Unit and are not part of this package.

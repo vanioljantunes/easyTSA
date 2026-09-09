@@ -4,40 +4,36 @@
 \name{easyTSA-package}
 \alias{easyTSA}
 \alias{easyTSA-package}
-\title{easyTSA: Trial Sequential Analysis for meta objects}
+\title{easyTSA: Trial Sequential Analysis for meta objects, computed by the TSA program}
 \description{
-Runs Trial Sequential Analysis (TSA, Copenhagen Trial Unit) on
-meta-analysis objects from the \pkg{meta} package, draws the TSA graph with
-\pkg{ggplot2}, and exchanges \code{.TSA} files with the original Java program
-(installed separately from \url{https://ctu.dk/tsa/}).
+Runs Trial Sequential Analysis (TSA) on meta-analysis objects from the
+\pkg{meta} package by driving the Copenhagen Trial Unit TSA program
+itself. The trials are written to the program's \code{.TSA} file, the program
+(installed separately, run headlessly through \pkg{rJava}) computes the
+required information size, the cumulative Z-curve, monitoring and
+futility boundaries and heterogeneity, and the results come back to R as
+a tidy object with a \pkg{ggplot2} plot. No statistic is recomputed in R.
 }
 \section{Guides (read in order)}{
 
 \enumerate{
-\item \link{easyTSA-1-workflow} -- from a \code{metabin} object to a TSA plot.
-\item \link{easyTSA-2-theory} -- what the RIS, boundaries and inner wedge are.
+\item \link{easyTSA-1-workflow} -- setup and the three calls.
+\item \link{easyTSA-2-results} -- what comes back, argument to program option.
 \item \link{easyTSA-3-plot} -- customising the plot.
-\item \link{easyTSA-4-software} -- opening the analysis in the TSA program.
+\item \link{easyTSA-4-software} -- the TSA program and the engine.
 }
 }
 
 \section{Main functions}{
 
 \describe{
-\item{\code{\link[=tsa_create]{tsa_create()}}}{Run the TSA on a \code{metabin}/\code{metacont} object.}
+\item{\code{\link[=tsa_run]{tsa_run()}}}{Run the TSA program on a \code{metabin} object.}
 \item{\code{\link[=tsa_plot]{tsa_plot()}}}{Draw the TSA graph (\code{ggplot}).}
-\item{\code{\link[=summary]{summary()}}}{Per-look table and TSA-adjusted CI.}
-\item{\code{\link[=tsa_write]{tsa_write()}}, \code{\link[=tsa_read]{tsa_read()}}}{Exchange \code{.TSA} files.}
-\item{\code{\link[=tsa_launch]{tsa_launch()}}}{Start the TSA software (needs Java and the program).}
-}
-}
-
-\section{Building blocks}{
-
-\describe{
-\item{\code{\link[=tsa_ris]{tsa_ris()}}, \code{\link[=tsa_diversity]{tsa_diversity()}}}{Required information size, D-squared.}
-\item{\code{\link[=tsa_bounds]{tsa_bounds()}}, \code{\link[=tsa_futility]{tsa_futility()}}, \code{\link[=tsa_spending]{tsa_spending()}}}{Lan-DeMets
-boundaries and spending functions.}
+\item{\code{\link[=summary]{summary()}}}{Per-look table and adjusted CI.}
+\item{\code{\link[=tsa_request]{tsa_request()}}, \code{\link[=tsa_write]{tsa_write()}}, \code{\link[=tsa_read]{tsa_read()}}}{Build and exchange
+\code{.TSA} files without running the program.}
+\item{\code{\link[=tsa_engine]{tsa_engine()}}, \code{\link[=tsa_jar]{tsa_jar()}}, \code{\link[=tsa_launch]{tsa_launch()}}}{Locate, start and
+open the program.}
 }
 }
 
@@ -50,14 +46,14 @@ electrocoagulation syndrome (7 studies).}
 }
 
 \examples{
+\dontrun{
+Sys.setenv(TSA_HOME = "C:/Users/me/TSA 0.9.5.10 Beta")
 m <- meta::metabin(event.e, n.e, event.c, n.c, data = atb_peecs,
-                   studlab = paste(author, year), sm = "RR",
-                   method = "MH", method.tau = "REML",
-                   random = TRUE, common = FALSE)
-x <- tsa_create(m, rrr = 0.30, label.e = "ATB", label.c = "No ATB",
-                title = "PEECS after ESD")
+                   studlab = paste(author, year), sm = "RR")
+x <- tsa_run(m, label.e = "ATB", label.c = "No ATB", title = "PEECS after ESD")
 summary(x)
 tsa_plot(x)
+}
 
 }
 \seealso{
