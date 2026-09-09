@@ -106,7 +106,7 @@ test_that(".TSA round trip and sample file parsing", {
   expect_true(any(grepl("^#METAANALYSIS BEGIN", txt)))
   expect_equal(sum(grepl("^#TRIAL BEGIN", txt)), 7)
   expect_true(any(grepl("^interventionEffectType\t204", txt)))
-  expect_true(any(grepl("^heterogeneityCorrection\t404", txt)))
+  expect_true(any(grepl("^heterogeneityCorrection\t401", txt)))
   expect_true(any(grepl("^betaSpendingFunction\t802", txt)))
   d <- tsa_read(f)
   o <- order(atb_peecs$year, paste(atb_peecs$author, atb_peecs$year))
