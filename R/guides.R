@@ -8,12 +8,12 @@
 #' program do every calculation, and brings the numbers back to R.
 #'
 #' @section Step 0, once per machine:
-#' Download the TSA program from <https://ctu.dk/tsa/>, unzip it, install a
-#' Java runtime (<https://adoptium.net>), and tell R where the program is:
+#' Download the TSA program and, if needed, a Java runtime:
 #' ```r
-#' Sys.setenv(TSA_HOME = "C:/Users/me/TSA 0.9.5.10 Beta")   # folder with TSA.jar
+#' tsa_setup()
 #' ```
-#' Put that line in your `.Rprofile` to make it permanent.
+#' The locations are remembered for later sessions. See
+#' [easyTSA-4-software] for the license.
 #'
 #' @section Step 1, fit the meta-analysis as usual:
 #' ```r
@@ -145,15 +145,19 @@ NULL
 #'
 #' @description
 #' The Copenhagen Trial Unit's TSA program (Java, version 0.9.5.10 Beta) is
-#' free to use but may not be redistributed, so it is not bundled. Download
-#' it from <https://ctu.dk/tsa/> (the zip contains `TSA.jar`, `lib/`, the
-#' user manual and the license), unzip it, and point easyTSA to it:
+#' free to use but may not be redistributed, so it is not bundled.
+#' [tsa_setup()] downloads it from the Copenhagen Trial Unit
+#' (<https://ctu.dk/tools>; the zip contains `TSA.jar`, `lib/`, the user
+#' manual and the license) after you accept the license, installs Java
+#' through \pkg{rJavaEnv} when none works, and remembers both:
 #' ```r
-#' Sys.setenv(TSA_HOME = "C:/Users/me/TSA 0.9.5.10 Beta")
-#' # or
-#' options(easyTSA.jar = "C:/Users/me/TSA 0.9.5.10 Beta/TSA.jar")
+#' tsa_setup()
 #' tsa_engine()   # starts the program's engine inside R; errors explain what is missing
 #' ```
+#' An existing installation can be used instead with
+#' `Sys.setenv(TSA_HOME = "<folder with TSA.jar>")` or
+#' `options(easyTSA.jar = "<path>/TSA.jar")`. easyTSA is not affiliated with
+#' the Copenhagen Trial Unit.
 #'
 #' @section How it runs:
 #' [tsa_run()] writes the `.TSA` file, and the program (loaded through

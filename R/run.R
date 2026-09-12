@@ -49,7 +49,7 @@
 #'
 #' @examples
 #' \dontrun{
-#' Sys.setenv(TSA_HOME = "C:/Users/me/TSA 0.9.5.10 Beta")
+#' tsa_setup()   # once per machine
 #' m <- meta::metabin(event.e, n.e, event.c, n.c, data = atb_peecs,
 #'                    studlab = paste(author, year), sm = "RR")
 #' x <- tsa_run(m, label.e = "ATB", label.c = "No ATB",
@@ -92,7 +92,7 @@ tsa_run <- function(m, rrr = NULL, control = NULL, intervention = NULL,
 #' @examples
 #' m <- meta::metabin(event.e, n.e, event.c, n.c, data = atb_peecs,
 #'                    studlab = paste(author, year), sm = "RR")
-#' req <- tsa_request(m, rrr = 0.30, label.e = "ATB", label.c = "No ATB")
+#' req <- tsa_request(m, control = 0.28, rrr = 0.30, label.e = "ATB", label.c = "No ATB")
 #' tsa_write(req, tempfile(fileext = ".TSA"))
 #' @export
 tsa_request <- function(m, rrr = NULL, control = NULL, intervention = NULL,

@@ -5,15 +5,20 @@
 \title{Guide 4: the TSA program}
 \description{
 The Copenhagen Trial Unit's TSA program (Java, version 0.9.5.10 Beta) is
-free to use but may not be redistributed, so it is not bundled. Download
-it from \url{https://ctu.dk/tsa/} (the zip contains \code{TSA.jar}, \verb{lib/}, the
-user manual and the license), unzip it, and point easyTSA to it:
+free to use but may not be redistributed, so it is not bundled.
+\code{\link[=tsa_setup]{tsa_setup()}} downloads it from the Copenhagen Trial Unit
+(\url{https://ctu.dk/tools}; the zip contains \code{TSA.jar}, \verb{lib/}, the user
+manual and the license) after you accept the license, installs Java
+through \pkg{rJavaEnv} when none works, and remembers both:
 
-\if{html}{\out{<div class="sourceCode r">}}\preformatted{Sys.setenv(TSA_HOME = "C:/Users/me/TSA 0.9.5.10 Beta")
-# or
-options(easyTSA.jar = "C:/Users/me/TSA 0.9.5.10 Beta/TSA.jar")
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{tsa_setup()
 tsa_engine()   # starts the program's engine inside R; errors explain what is missing
 }\if{html}{\out{</div>}}
+
+An existing installation can be used instead with
+\code{Sys.setenv(TSA_HOME = "<folder with TSA.jar>")} or
+\code{options(easyTSA.jar = "<path>/TSA.jar")}. easyTSA is not affiliated with
+the Copenhagen Trial Unit.
 }
 \section{How it runs}{
 

@@ -22,7 +22,7 @@ classpath and keeps it for the session. Called automatically by
 }
 \examples{
 \dontrun{
-Sys.setenv(TSA_HOME = "C:/Users/me/TSA 0.9.5.10 Beta")
+tsa_setup()   # once per machine
 tsa_engine()
 }
 }

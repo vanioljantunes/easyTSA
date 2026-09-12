@@ -83,7 +83,7 @@ those numbers.
 }
 \examples{
 \dontrun{
-Sys.setenv(TSA_HOME = "C:/Users/me/TSA 0.9.5.10 Beta")
+tsa_setup()   # once per machine
 m <- meta::metabin(event.e, n.e, event.c, n.c, data = atb_peecs,
                    studlab = paste(author, year), sm = "RR")
 x <- tsa_run(m, label.e = "ATB", label.c = "No ATB",

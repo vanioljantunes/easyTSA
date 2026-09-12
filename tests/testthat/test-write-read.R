@@ -42,9 +42,10 @@ test_that("tsa_write emits the program's codes and tsa_read round-trips", {
 })
 
 test_that("engine reports missing program clearly", {
-  withr::with_envvar(c(TSA_HOME = ""), withr::with_options(list(easyTSA.jar = NULL), {
+  withr::with_envvar(c(TSA_HOME = ""), withr::with_options(list(
+    easyTSA.jar = NULL, easyTSA.config_dir = tempfile("easyTSA-cfg")), {
     expect_equal(tsa_jar(), "")
-    expect_error(tsa_engine(jar = "no-such-TSA.jar"), "ctu.dk/tsa")
+    expect_error(tsa_engine(jar = "no-such-TSA.jar"), "tsa_setup")
     expect_error(tsa_run(fit_peecs(), jar = "no-such-TSA.jar"), "TSA_HOME")
   }))
 })

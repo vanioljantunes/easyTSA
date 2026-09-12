@@ -32,17 +32,14 @@ tsa_launch <- function(x, file = tempfile(fileext = ".TSA"), java = NULL,
   path <- if (inherits(x, c("easytsa", "tsa_request"))) tsa_write(x, file) else x
   if (!file.exists(path)) stop("File not found: ", path)
   path <- normalizePath(path)
-  if (is.null(java)) {
-    jh <- Sys.getenv("JAVA_HOME")
-    java <- if (nzchar(jh)) file.path(jh, "bin", "java") else Sys.which("java")
-  }
+  if (is.null(java)) java <- .tsa_java_bin()
   if (!nzchar(java) || (!file.exists(java) && !nzchar(Sys.which(java)))) {
-    stop("Java not found. Install a Java runtime (https://adoptium.net) ",
-         "or pass `java = `. The .TSA file was written to:\n  ", path)
+    stop("Java not found. Run tsa_setup() to install it, or pass `java = `. ",
+         "The .TSA file was written to:\n  ", path)
   }
   jar <- tsa_jar(jar)
   if (!nzchar(jar)) {
-    stop("TSA.jar not found. Download TSA from https://ctu.dk/tsa/ and set ",
+    stop("TSA.jar not found. Run tsa_setup() to download the TSA program, or set ",
          "TSA_HOME (folder with TSA.jar) or options(easyTSA.jar = ...). ",
          "The .TSA file was written to:\n  ", path)
   }

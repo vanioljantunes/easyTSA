@@ -24,6 +24,8 @@ draws the TSA graph with `ggplot2` so you can restyle it for a manuscript.
 - **`tsa_request()` / `tsa_write()` / `tsa_read()`** - build and exchange
   `.TSA` files (open them in the program's interface, read the program's
   files back).
+- **`tsa_setup()` / `tsa_remove()`** - download the TSA program and a Java
+  runtime, or remove them.
 - **`tsa_engine()` / `tsa_jar()` / `tsa_launch()`** - locate, start and
   open the program.
 
@@ -38,15 +40,23 @@ remotes::install_github("vanioljantunes/easyTSA")
 
 Then, once per machine:
 
-1. Install a Java runtime (8 or later), e.g. from <https://adoptium.net>.
-2. Download the TSA program from <https://ctu.dk/tsa/> and unzip it. It is
-   free to use but its license forbids redistribution, so it is not
-   bundled.
-3. Tell R where it is (put this in your `.Rprofile`):
-
 ```r
-Sys.setenv(TSA_HOME = "C:/Users/me/TSA 0.9.5.10 Beta")   # folder containing TSA.jar
+easyTSA::tsa_setup()
 ```
+
+`tsa_setup()` downloads the TSA program from the Copenhagen Trial Unit
+(<https://ctu.dk/tools>), installs a Java runtime if none works, and
+remembers both for later sessions. Nothing else needs installing.
+
+The TSA program is free to use, but its license forbids redistribution, so
+easyTSA downloads it from its authors instead of bundling it. You are asked
+to accept that license first (non-interactive: `tsa_setup(accept_license =
+TRUE)`). easyTSA is not affiliated with the Copenhagen Trial Unit.
+`tsa_remove()` uninstalls it.
+
+Already have the program? Point to it instead with
+`Sys.setenv(TSA_HOME = "<folder containing TSA.jar>")`. On Linux, `rJava`
+may need `sudo R CMD javareconf` once.
 
 ---
 

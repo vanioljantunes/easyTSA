@@ -10,13 +10,13 @@ program do every calculation, and brings the numbers back to R.
 }
 \section{Step 0, once per machine}{
 
-Download the TSA program from \url{https://ctu.dk/tsa/}, unzip it, install a
-Java runtime (\url{https://adoptium.net}), and tell R where the program is:
+Download the TSA program and, if needed, a Java runtime:
 
-\if{html}{\out{<div class="sourceCode r">}}\preformatted{Sys.setenv(TSA_HOME = "C:/Users/me/TSA 0.9.5.10 Beta")   # folder with TSA.jar
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{tsa_setup()
 }\if{html}{\out{</div>}}
 
-Put that line in your \code{.Rprofile} to make it permanent.
+The locations are remembered for later sessions. See
+\link{easyTSA-4-software} for the license.
 }
 
 \section{Step 1, fit the meta-analysis as usual}{

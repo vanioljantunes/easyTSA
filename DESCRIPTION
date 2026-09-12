@@ -1,13 +1,14 @@
 Package: easyTSA
 Title: Trial Sequential Analysis for 'meta' Objects
-Version: 0.2.0
+Version: 0.3.0
 Authors@R:
     person("Vanio", "Antunes", email = "vanio.antunes.md@gmail.com",
            role = c("aut", "cre"))
 Description: Runs Trial Sequential Analysis (TSA) on meta-analysis objects
     created with the 'meta' package by driving the Copenhagen Trial Unit TSA
     program itself: the trials are written to the program's '.TSA' file, the
-    program (installed separately, run headlessly through 'rJava') computes
+    program (downloaded from its authors by tsa_setup(), never bundled, run
+    headlessly through 'rJava') computes
     the required information size, cumulative Z-curve, monitoring and
     futility boundaries and heterogeneity, and the results come back to R
     as a tidy object with a 'ggplot2' plot. No statistic is recomputed in R.
@@ -19,11 +20,14 @@ Depends:
 Imports:
     meta (>= 6.0.0),
     rJava,
+    rJavaEnv (>= 0.3.0),
     ggplot2,
     stats,
+    tools,
     utils
-SystemRequirements: Java (>= 8); TSA 0.9.5.10 Beta from https://ctu.dk/tsa/
-    (not bundled; set TSA_HOME to its folder)
+SystemRequirements: TSA 0.9.5.10 Beta from https://ctu.dk/tools (downloaded
+    by tsa_setup(), not bundled); Java (>= 8), installed by tsa_setup() when
+    missing
 Suggests:
     readxl,
     testthat (>= 3.0.0),

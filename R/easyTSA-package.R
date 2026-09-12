@@ -3,7 +3,7 @@
 #' Runs Trial Sequential Analysis (TSA) on meta-analysis objects from the
 #' \pkg{meta} package by driving the Copenhagen Trial Unit TSA program
 #' itself. The trials are written to the program's `.TSA` file, the program
-#' (installed separately, run headlessly through \pkg{rJava}) computes the
+#' (downloaded by [tsa_setup()], run headlessly through \pkg{rJava}) computes the
 #' required information size, the cumulative Z-curve, monitoring and
 #' futility boundaries and heterogeneity, and the results come back to R as
 #' a tidy object with a \pkg{ggplot2} plot. No statistic is recomputed in R.
@@ -23,6 +23,8 @@
 #'   \item{[summary()]}{Per-look table and adjusted CI.}
 #'   \item{[tsa_request()], [tsa_write()], [tsa_read()]}{Build and exchange
 #'     `.TSA` files without running the program.}
+#'   \item{[tsa_setup()], [tsa_remove()]}{Install or remove the TSA program
+#'     and Java.}
 #'   \item{[tsa_engine()], [tsa_jar()], [tsa_launch()]}{Locate, start and
 #'     open the program.}
 #' }
@@ -35,7 +37,7 @@
 #'
 #' @examples
 #' \dontrun{
-#' Sys.setenv(TSA_HOME = "C:/Users/me/TSA 0.9.5.10 Beta")
+#' tsa_setup()   # once per machine
 #' m <- meta::metabin(event.e, n.e, event.c, n.c, data = atb_peecs,
 #'                    studlab = paste(author, year), sm = "RR")
 #' x <- tsa_run(m, label.e = "ATB", label.c = "No ATB", title = "PEECS after ESD")

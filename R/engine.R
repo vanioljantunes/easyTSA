@@ -6,8 +6,9 @@
 # headless JVM (rJava), loads the .TSA analysis file with the program's own
 # reader and asks the program's own classes for every number.
 #
-# The program is not bundled (its license forbids redistribution). The user
-# installs it and points easyTSA to TSA.jar, see tsa_jar().
+# The program is not bundled (its license forbids redistribution).
+# tsa_setup() downloads it from its authors and remembers where it is; see
+# tsa_jar() for how it is found.
 # ============================================================================
 
 .tsa_env <- new.env(parent = emptyenv())
@@ -15,11 +16,12 @@
 #' Locate the TSA software
 #'
 #' The Copenhagen Trial Unit's TSA program is free to use but its license
-#' does not allow redistribution, so it is not bundled. Download it from
-#' <https://ctu.dk/tsa/>, unzip it, and tell easyTSA where `TSA.jar` lives
-#' with the environment variable `TSA_HOME` (the folder containing
-#' `TSA.jar` and `lib/`), or `options(easyTSA.jar = "path/to/TSA.jar")`,
-#' or the `jar` argument of [tsa_run()] / [tsa_launch()].
+#' does not allow redistribution, so it is not bundled. [tsa_setup()]
+#' downloads it from <https://ctu.dk/tools> and remembers where it is. The
+#' first existing `TSA.jar` among these is used: the `jar` argument,
+#' `options(easyTSA.jar = "path/to/TSA.jar")`, the environment variable
+#' `TSA_HOME` (the folder containing `TSA.jar` and `lib/`), and the
+#' location saved by [tsa_setup()].
 #'
 #' @param jar Optional explicit path to `TSA.jar`.
 #' @return Path to `TSA.jar`, or `""` when not found.
@@ -29,15 +31,17 @@
 tsa_jar <- function(jar = NULL) {
   home <- Sys.getenv("TSA_HOME")
   cand <- c(jar, getOption("easyTSA.jar"),
-            if (nzchar(home)) file.path(home, "TSA.jar"))
+            if (nzchar(home)) file.path(home, "TSA.jar"),
+            .tsa_config_read()$jar)
   if (!length(cand)) return("")
   cand <- cand[nzchar(cand) & file.exists(cand)]
   if (length(cand)) normalizePath(cand[1]) else ""
 }
 
 .tsa_missing_msg <- function() {
-  paste0("TSA program not found. Download it from https://ctu.dk/tsa/, unzip, ",
-         "and set Sys.setenv(TSA_HOME = \"<folder containing TSA.jar>\") or ",
+  paste0("TSA program not found. Run tsa_setup() to download it from the ",
+         "Copenhagen Trial Unit, or point to an existing copy with ",
+         "Sys.setenv(TSA_HOME = \"<folder containing TSA.jar>\") or ",
          "options(easyTSA.jar = \"<path>/TSA.jar\").")
 }
 
@@ -53,7 +57,7 @@ tsa_jar <- function(jar = NULL) {
 #'   `tsa_version` and `io` (the program's file reader object).
 #' @examples
 #' \dontrun{
-#' Sys.setenv(TSA_HOME = "C:/Users/me/TSA 0.9.5.10 Beta")
+#' tsa_setup()   # once per machine
 #' tsa_engine()
 #' }
 #' @export
@@ -61,8 +65,15 @@ tsa_engine <- function(jar = NULL, restart = FALSE) {
   if (!restart && !is.null(.tsa_env$io) && identical(.tsa_env$jar, tsa_jar(jar))) {
     return(invisible(.tsa_env))
   }
+  asked <- jar
   jar <- tsa_jar(jar)
+  if (!nzchar(jar) && is.null(asked) && interactive() &&
+      isTRUE(utils::askYesNo("TSA program not found. Download it now with tsa_setup()?"))) {
+    tsa_setup()
+    return(tsa_engine())
+  }
   if (!nzchar(jar)) stop(.tsa_missing_msg(), call. = FALSE)
+  .tsa_use_saved_java()
   if (!requireNamespace("rJava", quietly = TRUE)) {
     stop("Package 'rJava' is required to run the TSA program from R.", call. = FALSE)
   }
@@ -74,7 +85,7 @@ tsa_engine <- function(jar = NULL, restart = FALSE) {
   }, error = function(e) e)
   if (!isTRUE(ok)) {
     stop("Could not start Java for the TSA program: ", conditionMessage(ok),
-         "\nInstall a Java runtime (https://adoptium.net) and set JAVA_HOME.",
+         "\nRun tsa_setup() to install Java, or set JAVA_HOME.",
          call. = FALSE)
   }
   rJava::.jaddClassPath(cp)

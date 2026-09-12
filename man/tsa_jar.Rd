@@ -14,11 +14,12 @@ Path to \code{TSA.jar}, or \code{""} when not found.
 }
 \description{
 The Copenhagen Trial Unit's TSA program is free to use but its license
-does not allow redistribution, so it is not bundled. Download it from
-\url{https://ctu.dk/tsa/}, unzip it, and tell easyTSA where \code{TSA.jar} lives
-with the environment variable \code{TSA_HOME} (the folder containing
-\code{TSA.jar} and \verb{lib/}), or \code{options(easyTSA.jar = "path/to/TSA.jar")},
-or the \code{jar} argument of \code{\link[=tsa_run]{tsa_run()}} / \code{\link[=tsa_launch]{tsa_launch()}}.
+does not allow redistribution, so it is not bundled. \code{\link[=tsa_setup]{tsa_setup()}}
+downloads it from \url{https://ctu.dk/tools} and remembers where it is. The
+first existing \code{TSA.jar} among these is used: the \code{jar} argument,
+\code{options(easyTSA.jar = "path/to/TSA.jar")}, the environment variable
+\code{TSA_HOME} (the folder containing \code{TSA.jar} and \verb{lib/}), and the
+location saved by \code{\link[=tsa_setup]{tsa_setup()}}.
 }
 \examples{
 tsa_jar()

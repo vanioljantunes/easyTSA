@@ -62,6 +62,6 @@ without having the program installed.
 \examples{
 m <- meta::metabin(event.e, n.e, event.c, n.c, data = atb_peecs,
                    studlab = paste(author, year), sm = "RR")
-req <- tsa_request(m, rrr = 0.30, label.e = "ATB", label.c = "No ATB")
+req <- tsa_request(m, control = 0.28, rrr = 0.30, label.e = "ATB", label.c = "No ATB")
 tsa_write(req, tempfile(fileext = ".TSA"))
 }

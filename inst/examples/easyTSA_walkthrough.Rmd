@@ -18,10 +18,9 @@ library(easyTSA)
 ```
 
 ```{r tsa program}
-# once per machine: download TSA from https://ctu.dk/tsa/, unzip, and point R to it
-# (a Java runtime is needed, https://adoptium.net)
-if (!nzchar(Sys.getenv("TSA_HOME"))) {
-  Sys.setenv(TSA_HOME = "C:/Users/vanio/Desktop/TSA 0.9.5.10 Beta")
+# once per machine: download the TSA program (and Java if needed) from inside R
+if (!nzchar(tsa_jar())) {
+  tsa_setup(accept_license = if (interactive()) NULL else TRUE)
 }
 tsa_engine()   # starts the program's engine inside R; errors say what is missing
 ```
